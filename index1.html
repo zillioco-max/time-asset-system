@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>時間資產系統</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600;700&family=Noto+Sans+TC:wght@300;400;500&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --rose: #9C6B6B;
+    --rose-light: #C4958F;
+    --rose-pale: #F2E8E6;
+    --rose-dark: #6B4545;
+    --cream: #FAF7F4;
+    --ink: #2C2018;
+    --ink-light: #6B5B4E;
+    --gold: #C4A882;
+    --gold-light: #EDE0CC;
+    --mint: #7BA89A;
+    --sand: #D4C4B0;
+    --white: #FFFFFF;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--cream);
+    color: var(--ink);
+    font-family: 'Noto Sans TC', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── Header ── */
+  .header {
+    padding: 24px 32px 20px;
+    border-bottom: 1px solid var(--gold-light);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--white);
+  }
+
+  .header-brand {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+  }
+
+  .header-brand h1 {
+    font-family: 'Noto Serif TC', serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--ink);
+  }
+
+  .header-brand span {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--rose);
+    letter-spacing: 0.15em;
+  }
+
+  .header-date {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--ink-light);
+    text-align: right;
+    line-height: 1.6;
+  }
+
+  /* ── Layout ── */
+  .main {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 0;
+    max-height: calc(100vh - 73px);
+  }
+
+  /* ── Chat Area ── */
+  .chat-area {
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid var(--gold-light);
+  }
+
+  .chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .chat-messages::-webkit-scrollbar { width: 4px; }
+  .chat-messages::-webkit-scrollbar-track { background: transparent; }
+  .chat-messages::-webkit-scrollbar-thumb { background: var(--sand); border-radius: 2px; }
+
+  .msg {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    animation: msgIn 0.3s ease both;
+  }
+
+  @keyframes msgIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .msg.user { align-items: flex-end; }
+  .msg.ai { align-items: flex-start; }
+
+  .msg-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    color: var(--sand);
+  }
+
+  .msg-bubble {
+    max-width: 80%;
+    padding: 14px 18px;
+    border-radius: 16px;
+    font-size: 14px;
+    line-height: 1.7;
+  }
+
+  .msg.user .msg-bubble {
+    background: var(--rose-dark);
+    color: white;
+    border-bottom-right-radius: 4px;
+  }
+
+  .msg.ai .msg-bubble {
+    background: var(--white);
+    color: var(--ink);
+    border: 1px solid var(--gold-light);
+    border-bottom-left-radius: 4px;
+  }
+
+  .msg.ai .msg-bubble.success {
+    border-color: var(--mint);
+    background: #F0F7F5;
+  }
+
+  /* Record card inside AI bubble */
+  .record-card {
+    margin-top: 10px;
+    padding: 12px;
+    background: white;
+    border: 1px solid var(--gold-light);
+    border-radius: 10px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px 16px;
+  }
+
+  .record-card .rc-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .rc-label {
+    font-size: 10px;
+    color: var(--sand);
+    letter-spacing: 0.1em;
+  }
+
+  .rc-val {
+    font-size: 13px;
+    color: var(--ink);
+    font-weight: 500;
+  }
+
+  .rc-cat {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  .cat-蓄積型 { background: var(--rose-pale); color: var(--rose-dark); }
+  .cat-運作型 { background: #FFF8EC; color: #8B6914; }
+  .cat-恢復型 { background: #EEF6F4; color: #3D7A6A; }
+  .cat-漏損型 { background: #F5F5F5; color: #666; }
+
+  /* Typing indicator */
+  .typing {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 14px 18px;
+    background: var(--white);
+    border: 1px solid var(--gold-light);
+    border-radius: 16px;
+    border-bottom-left-radius: 4px;
+    width: fit-content;
+  }
+
+  .typing span {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--sand);
+    animation: bounce 1.2s infinite;
+  }
+
+  .typing span:nth-child(2) { animation-delay: 0.2s; }
+  .typing span:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes bounce {
+    0%, 60%, 100% { transform: translateY(0); }
+    30% { transform: translateY(-6px); background: var(--rose); }
+  }
+
+  /* ── Input Bar ── */
+  .input-bar {
+    padding: 20px 32px;
+    border-top: 1px solid var(--gold-light);
+    background: var(--white);
+  }
+
+  .input-hint {
+    font-size: 11px;
+    color: var(--sand);
+    margin-bottom: 10px;
+    letter-spacing: 0.05em;
+  }
+
+  .input-row {
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+  }
+
+  .input-box {
+    flex: 1;
+    border: 1.5px solid var(--gold-light);
+    border-radius: 14px;
+    padding: 12px 16px;
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 14px;
+    color: var(--ink);
+    background: var(--cream);
+    resize: none;
+    outline: none;
+    line-height: 1.6;
+    min-height: 48px;
+    max-height: 140px;
+    transition: border-color 0.2s;
+  }
+
+  .input-box:focus { border-color: var(--rose); }
+  .input-box::placeholder { color: var(--sand); }
+
+  .send-btn {
+    width: 48px; height: 48px;
+    border-radius: 12px;
+    border: none;
+    background: var(--rose-dark);
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s, transform 0.1s;
+    flex-shrink: 0;
+  }
+
+  .send-btn:hover { background: var(--rose); }
+  .send-btn:active { transform: scale(0.95); }
+  .send-btn:disabled { background: var(--sand); cursor: not-allowed; }
+
+  .send-btn svg { width: 18px; height: 18px; }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .sidebar-header {
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid var(--gold-light);
+    background: var(--white);
+  }
+
+  .sidebar-header h2 {
+    font-family: 'Noto Serif TC', serif;
+    font-size: 14px;
+    color: var(--ink);
+    margin-bottom: 4px;
+  }
+
+  .sidebar-header p {
+    font-size: 11px;
+    color: var(--sand);
+    letter-spacing: 0.05em;
+  }
+
+  .sidebar-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .sidebar-body::-webkit-scrollbar { width: 3px; }
+  .sidebar-body::-webkit-scrollbar-thumb { background: var(--sand); border-radius: 2px; }
+
+  /* Today summary */
+  .today-summary {
+    background: var(--rose-dark);
+    border-radius: 14px;
+    padding: 18px;
+    color: white;
+  }
+
+  .today-summary h3 {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--rose-light);
+    margin-bottom: 12px;
+  }
+
+  .today-total {
+    font-family: 'DM Mono', monospace;
+    font-size: 36px;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .today-total span { font-size: 14px; color: var(--rose-light); }
+
+  .today-sub {
+    font-size: 11px;
+    color: var(--rose-light);
+  }
+
+  /* Category mini stats */
+  .cat-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 14px;
+  }
+
+  .cat-stat-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .cat-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .dot-蓄積型 { background: #C4958F; }
+  .dot-運作型 { background: #C4A882; }
+  .dot-恢復型 { background: #7BA89A; }
+  .dot-漏損型 { background: #aaa; }
+
+  .cat-stat-name {
+    font-size: 11px;
+    color: rgba(255,255,255,0.7);
+    flex: 1;
+  }
+
+  .cat-stat-hours {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: white;
+  }
+
+  /* Goal cards */
+  .goal-section h3 {
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: var(--sand);
+    margin-bottom: 10px;
+  }
+
+  .goal-item {
+    background: var(--white);
+    border: 1px solid var(--gold-light);
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 8px;
+  }
+
+  .goal-item-name {
+    font-size: 12px;
+    color: var(--ink);
+    font-weight: 500;
+    margin-bottom: 8px;
+    line-height: 1.4;
+  }
+
+  .goal-bar {
+    height: 4px;
+    background: var(--gold-light);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 6px;
+  }
+
+  .goal-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--rose-dark), var(--rose-light));
+    border-radius: 2px;
+    transition: width 0.8s ease;
+  }
+
+  .goal-meta {
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .goal-meta span {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--sand);
+  }
+
+  .goal-meta strong {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--rose);
+  }
+
+  /* Recent entries */
+  .recent-section h3 {
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: var(--sand);
+    margin-bottom: 10px;
+  }
+
+  .entry-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--gold-light);
+  }
+
+  .entry-item:last-child { border-bottom: none; }
+
+  .entry-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    margin-top: 4px;
+    flex-shrink: 0;
+  }
+
+  .entry-info { flex: 1; }
+
+  .entry-name {
+    font-size: 13px;
+    color: var(--ink);
+    margin-bottom: 2px;
+  }
+
+  .entry-meta {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--sand);
+  }
+
+  .entry-hours {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-light);
+  }
+
+  /* Empty state */
+  .empty-state {
+    text-align: center;
+    padding: 20px;
+    color: var(--sand);
+    font-size: 12px;
+    line-height: 1.8;
+  }
+
+  /* Quick input chips */
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+
+  .chip {
+    padding: 5px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--gold-light);
+    background: var(--white);
+    font-size: 12px;
+    color: var(--ink-light);
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: 'Noto Sans TC', sans-serif;
+  }
+
+  .chip:hover {
+    border-color: var(--rose);
+    color: var(--rose-dark);
+    background: var(--rose-pale);
+  }
+
+  @media (max-width: 768px) {
+    .main { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-brand">
+    <h1>時間資產系統</h1>
+    <span>@shan_visible</span>
+  </div>
+  <div class="header-date" id="headerDate"></div>
+</div>
+
+<div class="main">
+
+  <!-- Chat Area -->
+  <div class="chat-area">
+    <div class="chat-messages" id="chatMessages">
+
+      <div class="msg ai">
+        <div class="msg-label">AI 助理</div>
+        <div class="msg-bubble">
+          早安 Wenshan 👋<br><br>
+          今天想記錄什麼？你可以直接跟我說，例如：<br><br>
+          「剛才花了兩小時做 AI 工具」<br>
+          「下午一點到三點在讀證照教材」<br>
+          「早上九點到十點半玩 AI，然後去健身房一小時」<br><br>
+          我會幫你分類並記錄下來。
+        </div>
+      </div>
+
+    </div>
+
+    <div class="input-bar">
+      <div class="input-hint">💡 直接說你做了什麼，AI 幫你分類記錄</div>
+      <div class="chips" id="quickChips">
+        <div class="chip" onclick="quickInput('做 AI 工具兩小時')">🌱 做 AI 工具</div>
+        <div class="chip" onclick="quickInput('讀證照教材一小時')">🌱 讀證照</div>
+        <div class="chip" onclick="quickInput('健身一小時')">🔋 健身</div>
+        <div class="chip" onclick="quickInput('處理客戶工作兩小時')">⚡ 客戶工作</div>
+        <div class="chip" onclick="quickInput('放空滑手機一小時')">🕳️ 放空</div>
+      </div>
+      <div class="input-row">
+        <textarea
+          class="input-box"
+          id="userInput"
+          placeholder="說說你今天做了什麼..."
+          rows="1"
+          onkeydown="handleKey(event)"
+          oninput="autoResize(this)"
+        ></textarea>
+        <button class="send-btn" id="sendBtn" onclick="sendMessage()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="22" y1="2" x2="11" y2="13"></line>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <h2>今日蓄積</h2>
+      <p>即時更新</p>
+    </div>
+    <div class="sidebar-body">
+
+      <!-- Today Summary -->
+      <div class="today-summary">
+        <h3>今日蓄積時數</h3>
+        <div class="today-total" id="todayTotal">0.0 <span>hrs</span></div>
+        <div class="today-sub" id="todayDate"></div>
+        <div class="cat-stats" id="catStats">
+          <div class="cat-stat-row">
+            <div class="cat-dot dot-蓄積型"></div>
+            <div class="cat-stat-name">蓄積型</div>
+            <div class="cat-stat-hours" id="stat-蓄積型">0.0 hrs</div>
+          </div>
+          <div class="cat-stat-row">
+            <div class="cat-dot dot-運作型"></div>
+            <div class="cat-stat-name">運作型</div>
+            <div class="cat-stat-hours" id="stat-運作型">0.0 hrs</div>
+          </div>
+          <div class="cat-stat-row">
+            <div class="cat-dot dot-恢復型"></div>
+            <div class="cat-stat-name">恢復型</div>
+            <div class="cat-stat-hours" id="stat-恢復型">0.0 hrs</div>
+          </div>
+          <div class="cat-stat-row">
+            <div class="cat-dot dot-漏損型"></div>
+            <div class="cat-stat-name">漏損型</div>
+            <div class="cat-stat-hours" id="stat-漏損型">0.0 hrs</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Goals -->
+      <div class="goal-section">
+        <h3>目標進度</h3>
+        <div class="goal-item">
+          <div class="goal-item-name">100 個 AI 小工具</div>
+          <div class="goal-bar">
+            <div class="goal-bar-fill" id="toolProgress" style="width:6%"></div>
+          </div>
+          <div class="goal-meta">
+            <span id="toolCount">已完成 6 / 100 個</span>
+            <strong>6%</strong>
+          </div>
+        </div>
+        <div class="goal-item">
+          <div class="goal-item-name">Google AI Essentials 證照</div>
+          <div class="goal-bar">
+            <div class="goal-bar-fill" id="certProgress" style="width:0%"></div>
+          </div>
+          <div class="goal-meta">
+            <span id="certCount">學習時數 0 / 10 小時</span>
+            <strong id="certPct">0%</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Entries -->
+      <div class="recent-section">
+        <h3>今日記錄</h3>
+        <div id="recentEntries">
+          <div class="empty-state">今天還沒有記錄<br>跟我說你做了什麼吧</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<!-- API Key Modal -->
+<div id="apiKeyModal" style="display:none;position:fixed;inset:0;background:rgba(44,32,24,0.5);z-index:999;align-items:center;justify-content:center;">
+  <div style="background:var(--cream);border-radius:20px;padding:36px;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.2);">
+    <div style="font-family:'Noto Serif TC',serif;font-size:20px;font-weight:700;color:var(--ink);margin-bottom:8px;">設定 API Key</div>
+    <div style="font-size:13px;color:var(--ink-light);line-height:1.8;margin-bottom:20px;">
+      你的 API Key 只會存在這台電腦的瀏覽器裡，不會上傳到任何地方。<br>
+      到 <a href="https://console.anthropic.com/settings/keys" target="_blank" style="color:var(--rose);">console.anthropic.com</a> 取得你的 Key。
+    </div>
+    <input
+      id="apiKeyInput"
+      type="password"
+      placeholder="sk-ant-api03-..."
+      style="width:100%;padding:12px 16px;border:1.5px solid var(--gold-light);border-radius:12px;font-size:14px;font-family:'Noto Sans TC',sans-serif;background:white;outline:none;margin-bottom:8px;color:var(--ink);"
+      onkeydown="if(event.key==='Enter') saveApiKey()"
+    />
+    <div id="apiKeyError" style="font-size:12px;color:#C0392B;margin-bottom:12px;min-height:16px;"></div>
+    <button onclick="saveApiKey()" style="width:100%;padding:14px;background:var(--rose-dark);color:white;border:none;border-radius:12px;font-size:15px;font-family:'Noto Sans TC',sans-serif;cursor:pointer;font-weight:500;">確認儲存</button>
+  </div>
+</div>
+
+<script>
+// ── Config ──
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzP_PE6MRCSc5JT01R7TdR5k_F9KLttOyQ8mbtuPi7PHhEMPW7646JhSqnqa1PqKBH_LA/exec';
+const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/messages';
+const ANTHROPIC_API_KEY = localStorage.getItem('anthropic_api_key') || '';
+
+// ── State ──
+let todayEntries = [];
+let certHours = 0;
+
+// ── Init ──
+function init() {
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('zh-TW', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' });
+  document.getElementById('headerDate').innerHTML = dateStr + '<br>' + now.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' });
+  document.getElementById('todayDate').textContent = dateStr;
+  setInterval(() => {
+    const t = new Date();
+    document.getElementById('headerDate').innerHTML = t.toLocaleDateString('zh-TW', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' }) + '<br>' + t.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' });
+  }, 60000);
+}
+
+// ── UI Helpers ──
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 140) + 'px';
+}
+
+function quickInput(text) {
+  const input = document.getElementById('userInput');
+  input.value = text;
+  input.focus();
+  autoResize(input);
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+}
+
+function addMessage(role, content, extraHtml = '') {
+  const container = document.getElementById('chatMessages');
+  const div = document.createElement('div');
+  div.className = `msg ${role}`;
+  div.innerHTML = `
+    <div class="msg-label">${role === 'user' ? 'Wenshan' : 'AI 助理'}</div>
+    <div class="msg-bubble ${extraHtml ? 'success' : ''}">${content}${extraHtml}</div>
+  `;
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+  return div;
+}
+
+function showTyping() {
+  const container = document.getElementById('chatMessages');
+  const div = document.createElement('div');
+  div.className = 'msg ai';
+  div.id = 'typingIndicator';
+  div.innerHTML = `
+    <div class="msg-label">AI 助理</div>
+    <div class="typing"><span></span><span></span><span></span></div>
+  `;
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+}
+
+function removeTyping() {
+  const el = document.getElementById('typingIndicator');
+  if (el) el.remove();
+}
+
+// ── Main Send ──
+async function sendMessage() {
+  const input = document.getElementById('userInput');
+  const text = input.value.trim();
+  if (!text) return;
+
+  const sendBtn = document.getElementById('sendBtn');
+  sendBtn.disabled = true;
+  input.value = '';
+  input.style.height = 'auto';
+
+  addMessage('user', text);
+  showTyping();
+
+  try {
+    const parsed = await parseWithAI(text);
+    removeTyping();
+
+    if (parsed) {
+      const recordHtml = buildRecordCard(parsed);
+      addMessage('ai', `✅ 已記錄！`, recordHtml);
+      await saveToSheets(parsed);
+      updateSidebar(parsed);
+    } else {
+      addMessage('ai', '我沒有辦法從這段話裡找到時間資訊，可以再說清楚一點嗎？例如做了什麼、大概多久？');
+    }
+  } catch (err) {
+    removeTyping();
+    addMessage('ai', `記錄時遇到問題：${err.message}，請再試一次。`);
+  }
+
+  sendBtn.disabled = false;
+  input.focus();
+}
+
+// ── AI Parsing ──
+async function parseWithAI(userText) {
+  const today = new Date().toISOString().split('T')[0];
+  const now = new Date();
+  const currentHour = now.getHours();
+  const currentMin = now.getMinutes();
+
+  const systemPrompt = `你是一個時間記錄助理。從使用者的描述中提取時間活動資訊，並回傳 JSON。
+
+分類規則：
+- 蓄積型：直接推進個人目標的時間（做AI工具、學習、寫作、個人品牌）
+- 運作型：維持工作和生活運轉的必要事務（客戶工作、開會、家務、行政）
+- 恢復型：讓身心恢復能量（健身、睡眠、休息、散步、吃飯、放鬆娛樂）
+- 漏損型：事後覺得沒有意義、消失的時間（無意識滑手機、拖延）
+
+時間推算：今天日期 ${today}，現在時間約 ${currentHour}:${String(currentMin).padStart(2,'0')}。
+如果使用者說「剛才」「剛剛」，以現在時間往前推算。
+如果說「早上」預設9:00開始，「下午」預設13:00，「晚上」預設20:00。
+
+只回傳 JSON，格式如下，不要加其他文字：
+{
+  "eventName": "活動名稱（簡短）",
+  "category": "蓄積型|運作型|恢復型|漏損型",
+  "date": "YYYY-MM-DD",
+  "startTime": "HH:MM",
+  "endTime": "HH:MM",
+  "hours": 數字,
+  "note": "備註（可空）"
+}
+
+如果無法解析，回傳 null。`;
+
+  const apiKey = localStorage.getItem('anthropic_api_key');
+  if (!apiKey) { document.getElementById('apiKeyModal').style.display = 'flex'; throw new Error('請先設定 API Key'); }
+
+  const response = await fetch(ANTHROPIC_API_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 500,
+      system: systemPrompt,
+      messages: [{ role: 'user', content: userText }]
+    })
+  });
+
+  if (!response.ok) throw new Error('API 連線失敗');
+
+  const data = await response.json();
+  const text = data.content[0].text.trim();
+
+  if (text === 'null') return null;
+
+  try {
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
+}
+
+// ── Record Card HTML ──
+function buildRecordCard(d) {
+  const catEmoji = { '蓄積型': '🌱', '運作型': '⚡', '恢復型': '🔋', '漏損型': '🕳️' };
+  return `
+    <div class="record-card">
+      <div class="rc-item" style="grid-column:1/-1">
+        <div class="rc-label">活動</div>
+        <div class="rc-val">${d.eventName}</div>
+      </div>
+      <div class="rc-item">
+        <div class="rc-label">類別</div>
+        <div class="rc-cat cat-${d.category}">${catEmoji[d.category] || ''} ${d.category}</div>
+      </div>
+      <div class="rc-item">
+        <div class="rc-label">時數</div>
+        <div class="rc-val">${d.hours} 小時</div>
+      </div>
+      <div class="rc-item">
+        <div class="rc-label">開始</div>
+        <div class="rc-val">${d.startTime}</div>
+      </div>
+      <div class="rc-item">
+        <div class="rc-label">結束</div>
+        <div class="rc-val">${d.endTime}</div>
+      </div>
+      ${d.note ? `<div class="rc-item" style="grid-column:1/-1"><div class="rc-label">備註</div><div class="rc-val">${d.note}</div></div>` : ''}
+    </div>
+  `;
+}
+
+// ── Save to Sheets ──
+async function saveToSheets(data) {
+  try {
+    await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+  } catch (err) {
+    console.warn('Sheets 儲存失敗:', err);
+  }
+}
+
+// ── Update Sidebar ──
+function updateSidebar(entry) {
+  todayEntries.push(entry);
+
+  // Update total & category stats
+  const stats = { '蓄積型': 0, '運作型': 0, '恢復型': 0, '漏損型': 0 };
+  todayEntries.forEach(e => { stats[e.category] = (stats[e.category] || 0) + e.hours; });
+
+  const totalHrs = Object.values(stats).reduce((a, b) => a + b, 0);
+  document.getElementById('todayTotal').innerHTML = `${totalHrs.toFixed(1)} <span>hrs</span>`;
+
+  Object.keys(stats).forEach(cat => {
+    const el = document.getElementById(`stat-${cat}`);
+    if (el) el.textContent = `${stats[cat].toFixed(1)} hrs`;
+  });
+
+  // Update cert hours if applicable
+  if (entry.category === '蓄積型' && entry.eventName.includes('證照')) {
+    certHours += entry.hours;
+    const pct = Math.min(Math.round((certHours / 10) * 100), 100);
+    document.getElementById('certProgress').style.width = pct + '%';
+    document.getElementById('certCount').textContent = `學習時數 ${certHours.toFixed(1)} / 10 小時`;
+    document.getElementById('certPct').textContent = pct + '%';
+  }
+
+  // Update recent entries
+  const container = document.getElementById('recentEntries');
+  const catColors = { '蓄積型': '#9C6B6B', '運作型': '#C4A882', '恢復型': '#7BA89A', '漏損型': '#aaa' };
+  const catEmoji = { '蓄積型': '🌱', '運作型': '⚡', '恢復型': '🔋', '漏損型': '🕳️' };
+
+  container.innerHTML = todayEntries.slice().reverse().map(e => `
+    <div class="entry-item">
+      <div class="entry-dot" style="background:${catColors[e.category]}"></div>
+      <div class="entry-info">
+        <div class="entry-name">${e.eventName}</div>
+        <div class="entry-meta">${catEmoji[e.category]} ${e.category} · ${e.startTime}-${e.endTime}</div>
+      </div>
+      <div class="entry-hours">${e.hours}h</div>
+    </div>
+  `).join('');
+}
+
+// ── API Key Setup ──
+function checkApiKey() {
+  const key = localStorage.getItem('anthropic_api_key');
+  if (!key) {
+    document.getElementById('apiKeyModal').style.display = 'flex';
+  }
+}
+
+function saveApiKey() {
+  const val = document.getElementById('apiKeyInput').value.trim();
+  if (!val.startsWith('sk-ant-')) {
+    document.getElementById('apiKeyError').textContent = '格式不對，Key 應該以 sk-ant- 開頭';
+    return;
+  }
+  localStorage.setItem('anthropic_api_key', val);
+  document.getElementById('apiKeyModal').style.display = 'none';
+  addMessage('ai', '✅ API Key 設定完成！現在可以開始記錄了。');
+}
+
+function resetApiKey() {
+  localStorage.removeItem('anthropic_api_key');
+  document.getElementById('apiKeyInput').value = '';
+  document.getElementById('apiKeyError').textContent = '';
+  document.getElementById('apiKeyModal').style.display = 'flex';
+}
+
+init();
+checkApiKey();
+</script>
+</body>
+</html>
