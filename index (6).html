@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>時間資產系統</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Outfit:wght@300;400;500;600;700&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #F4F6FA;
+  --card: #FFFFFF;
+  --card2: #FAFBFD;
+  --ink: #1A1A2E;
+  --ink2: #6B7280;
+  --ink3: #9CA3AF;
+  --yellow: #F0C84A;
+  --yellow-d: #C4960A;
+  --yellow-pale: #FEF9E7;
+  --blue: #4F6FE8;
+  --blue-pale: #EEF2FF;
+  --sidebar-bg: #FFFFFF;
+  --sidebar-w: 210px;
+  --acc: #4A9B7F;
+  --acc-pale: #E8F5F0;
+  --run: #C4893A;
+  --run-pale: #FDF3E7;
+  --rest: #5A7EC4;
+  --rest-pale: #EEF3FC;
+  --leak: #C45A5A;
+  --leak-pale: #FCEAEA;
+  --border: #E5E7EB;
+  --radius: 14px;
+  --radius-sm: 9px;
+  --shadow: 0 1px 12px rgba(0,0,0,0.06);
+  --shadow-md: 0 4px 24px rgba(0,0,0,0.10);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--ink);display:flex;min-height:100vh;}
+
+/* ── SIDEBAR (white, like CRMM) ── */
+#sidebar{
+  width:var(--sidebar-w);min-height:100vh;background:var(--sidebar-bg);
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;position:fixed;top:0;left:0;z-index:100;
+  box-shadow:2px 0 16px rgba(0,0,0,0.04);
+}
+#sidebar-logo{
+  padding:22px 20px 18px;display:flex;align-items:center;gap:10px;
+  border-bottom:1px solid var(--border);
+}
+.logo-icon{
+  width:34px;height:34px;background:linear-gradient(135deg,var(--blue),#7C9FF5);
+  border-radius:10px;display:flex;align-items:center;justify-content:center;
+  font-size:16px;flex-shrink:0;box-shadow:0 2px 8px rgba(79,111,232,0.3);
+}
+.logo-text{font-family:'DM Serif Display',serif;font-size:15px;color:var(--ink);line-height:1.2;}
+.logo-text span{display:block;font-family:'Outfit',sans-serif;font-size:10px;color:var(--ink3);font-weight:400;margin-top:1px;}
+#sidebar-nav{padding:12px 10px;flex:1;}
+.nav-section-label{font-size:10px;font-weight:700;color:var(--ink3);letter-spacing:0.07em;text-transform:uppercase;padding:10px 10px 5px;}
+.nav-item{
+  display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;
+  cursor:pointer;color:var(--ink2);font-size:13px;font-weight:500;
+  transition:all 0.17s;margin-bottom:2px;
+}
+.nav-item:hover{background:var(--bg);color:var(--ink);}
+.nav-item.active{background:var(--blue-pale);color:var(--blue);}
+.nav-icon{font-size:16px;width:20px;text-align:center;flex-shrink:0;}
+
+/* Key section */
+#key-section{padding:12px 14px;border-top:1px solid var(--border);}
+#key-section label{font-size:10px;color:var(--ink3);display:block;margin-bottom:5px;font-weight:600;letter-spacing:0.04em;}
+#key-row{display:flex;gap:5px;align-items:center;}
+#key-dot{width:6px;height:6px;border-radius:50%;background:#D1D5DB;flex-shrink:0;}
+#key-dot.ok{background:var(--acc);}
+#key-input{flex:1;padding:6px 8px;background:var(--bg);border:1px solid var(--border);border-radius:7px;color:var(--ink);font-size:10px;font-family:'DM Mono',monospace;outline:none;min-width:0;}
+#key-input::placeholder{color:var(--ink3);}
+#btn-save-key{padding:5px 9px;background:var(--blue);color:#fff;border:none;border-radius:7px;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;}
+#btn-save-key:hover{background:#3B58D4;}
+
+/* ── MAIN ── */
+#main{margin-left:var(--sidebar-w);flex:1;min-height:100vh;display:flex;flex-direction:column;}
+.page{display:none;flex-direction:column;flex:1;padding:24px 28px;gap:16px;}
+.page.active{display:flex;}
+
+/* ── HERO CARD ── */
+#hero-card{
+  background:linear-gradient(135deg,#4F6FE8 0%,#7B8FF5 50%,#A78BFA 100%);
+  border-radius:18px;padding:24px 28px;display:flex;align-items:center;
+  justify-content:space-between;position:relative;overflow:hidden;
+  box-shadow:0 8px 32px rgba(79,111,232,0.25);min-height:140px;
+}
+#hero-card::before{
+  content:'';position:absolute;top:-40px;right:200px;
+  width:200px;height:200px;border-radius:50%;
+  background:rgba(255,255,255,0.07);
+}
+#hero-card::after{
+  content:'';position:absolute;bottom:-60px;left:120px;
+  width:160px;height:160px;border-radius:50%;
+  background:rgba(255,255,255,0.05);
+}
+#hero-left{z-index:1;}
+#hero-greeting{font-size:13px;color:rgba(255,255,255,0.7);font-weight:400;margin-bottom:4px;}
+#hero-title{font-family:'DM Serif Display',serif;font-size:26px;color:#fff;margin-bottom:10px;line-height:1.2;}
+#hero-chips{display:flex;gap:8px;flex-wrap:wrap;}
+.hero-chip{
+  padding:5px 13px;border-radius:20px;font-size:12px;font-weight:600;
+  background:rgba(255,255,255,0.18);color:#fff;backdrop-filter:blur(4px);
+  border:1px solid rgba(255,255,255,0.2);
+}
+.hero-chip.yellow{background:var(--yellow);color:var(--ink);border-color:var(--yellow);}
+#hero-illustration{z-index:1;flex-shrink:0;}
+#hero-illustration svg{width:160px;height:120px;opacity:0.92;}
+
+/* Stats row */
+#stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+.stat-chip{
+  background:var(--card);border-radius:var(--radius);padding:16px 18px;
+  border:1px solid var(--border);box-shadow:var(--shadow);
+  display:flex;align-items:center;gap:12px;
+}
+.stat-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.stat-icon.acc{background:var(--acc-pale);}
+.stat-icon.run{background:var(--run-pale);}
+.stat-icon.rest{background:var(--rest-pale);}
+.stat-icon.leak{background:var(--leak-pale);}
+.stat-right{flex:1;}
+.stat-num{font-family:'DM Serif Display',serif;font-size:22px;line-height:1;font-weight:400;}
+.stat-num.acc{color:var(--acc);}
+.stat-num.run{color:var(--run);}
+.stat-num.rest{color:var(--rest);}
+.stat-num.leak{color:var(--leak);}
+.stat-label{font-size:11px;color:var(--ink3);margin-top:2px;font-weight:500;}
+
+/* ── TODAY LAYOUT ── */
+#today-layout{display:grid;grid-template-columns:1fr 320px;gap:14px;flex:1;min-height:0;}
+#cal-panel{display:flex;flex-direction:column;gap:10px;}
+.cal-view-tabs{display:flex;gap:5px;}
+.cal-tab{padding:6px 14px;border-radius:20px;border:1px solid var(--border);background:var(--card);font-family:'Outfit',sans-serif;font-size:12px;font-weight:500;color:var(--ink2);cursor:pointer;transition:all 0.15s;}
+.cal-tab.active{background:var(--blue);color:#fff;border-color:var(--blue);}
+#cal-embed-wrap{flex:1;background:var(--card);border-radius:var(--radius);border:1px solid var(--border);overflow:hidden;box-shadow:var(--shadow);min-height:480px;}
+#cal-iframe{width:100%;height:100%;border:none;min-height:480px;}
+#right-panel{display:flex;flex-direction:column;gap:12px;}
+
+/* Card */
+.card{background:var(--card);border-radius:var(--radius);border:1px solid var(--border);box-shadow:var(--shadow);padding:18px;}
+.card-title{font-size:11px;font-weight:700;color:var(--ink3);letter-spacing:0.07em;text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;}
+
+/* Todo */
+#todo-list{display:flex;flex-direction:column;gap:4px;max-height:170px;overflow-y:auto;}
+.todo-item{display:flex;align-items:center;gap:8px;padding:7px 9px;background:var(--bg);border-radius:8px;}
+.todo-check{width:16px;height:16px;border-radius:4px;border:1.5px solid var(--border);cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px;color:#fff;transition:all 0.15s;}
+.todo-check.done{background:var(--acc);border-color:var(--acc);}
+.todo-text{font-size:12px;color:var(--ink);flex:1;}
+.todo-text.done{text-decoration:line-through;color:var(--ink3);}
+.todo-del{font-size:13px;color:var(--ink3);cursor:pointer;opacity:0;}
+.todo-item:hover .todo-del{opacity:1;}
+.todo-del:hover{color:var(--leak);}
+#todo-add-row{display:flex;gap:6px;margin-top:8px;}
+#todo-input{flex:1;padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px;font-family:'Outfit',sans-serif;color:var(--ink);background:var(--bg);outline:none;}
+#todo-input:focus{border-color:var(--blue);}
+#btn-add-todo{padding:7px 12px;background:var(--blue);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;}
+
+/* Voice add */
+#voice-card{background:linear-gradient(135deg,#1C1C2E,#2D2D4E);border-radius:var(--radius);padding:18px;border:none;box-shadow:var(--shadow-md);}
+#voice-card .card-title{color:rgba(255,255,255,0.35);}
+#voice-wrap{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.11);border-radius:10px;padding:10px 12px;margin-bottom:10px;}
+#ai-sched-box{flex:1;border:none;background:transparent;color:#fff;font-family:'Outfit',sans-serif;font-size:13px;outline:none;resize:none;min-height:36px;line-height:1.5;}
+#ai-sched-box::placeholder{color:rgba(255,255,255,0.25);}
+#btn-voice-sched{width:36px;height:36px;border-radius:8px;border:none;background:rgba(255,255,255,0.1);cursor:pointer;font-size:16px;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all 0.15s;}
+#btn-voice-sched:hover{background:var(--yellow);}
+#btn-voice-sched.recording{background:var(--leak);animation:pulse 1s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.6}}
+#btn-ai-sched{width:100%;padding:11px;background:var(--yellow);color:var(--ink);border:none;border-radius:9px;font-size:13px;font-weight:700;font-family:'Outfit',sans-serif;cursor:pointer;transition:all 0.17s;}
+#btn-ai-sched:hover{background:var(--yellow-d);color:#fff;}
+#sched-feedback{font-size:11px;color:rgba(255,255,255,0.4);min-height:16px;margin-top:7px;text-align:center;}
+#manual-toggle{font-size:11px;color:rgba(255,255,255,0.25);cursor:pointer;text-align:center;margin-top:5px;}
+#manual-toggle:hover{color:rgba(255,255,255,0.5);}
+#manual-form{display:none;margin-top:9px;}
+#manual-form.open{display:flex;flex-direction:column;gap:7px;}
+.mf-row{display:flex;gap:7px;}
+.mf-row input,.mf-row select{flex:1;padding:7px 9px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.11);border-radius:7px;color:#fff;font-size:11px;font-family:'Outfit',sans-serif;outline:none;}
+.mf-row select option{background:#2C2C4E;}
+#btn-manual-add{padding:8px;background:var(--acc);color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:600;font-family:'Outfit',sans-serif;cursor:pointer;}
+
+/* ── RECORD PAGE ── */
+.pg-head{display:flex;align-items:baseline;gap:12px;margin-bottom:4px;}
+.pg-title{font-family:'DM Serif Display',serif;font-size:26px;color:var(--ink);}
+.pg-sub{font-size:12px;color:var(--ink3);}
+#input-area{background:var(--card);border-radius:var(--radius);border:1px solid var(--border);overflow:hidden;box-shadow:var(--shadow);}
+#input-box{width:100%;min-height:80px;padding:16px 18px 10px;border:none;outline:none;font-family:'Outfit',sans-serif;font-size:14px;line-height:1.7;color:var(--ink);background:transparent;resize:none;}
+#input-box::placeholder{color:var(--ink3);}
+#input-toolbar{display:flex;align-items:center;justify-content:space-between;padding:9px 13px;border-top:1px solid var(--border);background:var(--card2);}
+.quick-tags{display:flex;gap:5px;flex-wrap:wrap;}
+.qtag{padding:4px 10px;border-radius:20px;font-size:11px;cursor:pointer;border:1px solid transparent;font-weight:500;transition:all 0.15s;}
+.qtag[data-type="acc"]{background:var(--acc-pale);color:var(--acc);border-color:rgba(74,155,127,0.2);}
+.qtag[data-type="run"]{background:var(--run-pale);color:var(--run);border-color:rgba(196,137,58,0.2);}
+.qtag[data-type="rest"]{background:var(--rest-pale);color:var(--rest);border-color:rgba(90,126,196,0.2);}
+.qtag[data-type="leak"]{background:var(--leak-pale);color:var(--leak);border-color:rgba(196,90,90,0.2);}
+.qtag:hover{opacity:0.7;}
+.toolbar-right{display:flex;gap:7px;align-items:center;}
+#btn-mic{width:32px;height:32px;border-radius:50%;border:1px solid var(--border);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;transition:all 0.15s;}
+#btn-mic:hover{border-color:var(--blue);background:var(--blue-pale);}
+#btn-mic.recording{background:var(--leak);color:#fff;border-color:var(--leak);animation:pulse 1s infinite;}
+#btn-send{padding:7px 18px;background:var(--blue);color:#fff;border:none;border-radius:20px;font-size:13px;font-family:'Outfit',sans-serif;font-weight:600;cursor:pointer;}
+#btn-send.loading{opacity:0.6;pointer-events:none;}
+#records-list{display:flex;flex-direction:column;gap:7px;max-height:420px;overflow-y:auto;padding-right:4px;}
+#records-list::-webkit-scrollbar{width:3px;}
+#records-list::-webkit-scrollbar-thumb{background:var(--border);}
+.record-card{background:var(--card);border-radius:var(--radius-sm);padding:12px 14px;border-left:3px solid var(--border);box-shadow:var(--shadow);display:flex;gap:10px;animation:slideIn 0.22s ease;}
+@keyframes slideIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+.record-card[data-type="acc"]{border-left-color:var(--acc);}
+.record-card[data-type="run"]{border-left-color:var(--run);}
+.record-card[data-type="rest"]{border-left-color:var(--rest);}
+.record-card[data-type="leak"]{border-left-color:var(--leak);}
+.record-meta{flex:1;}
+.record-text{font-size:13px;color:var(--ink);line-height:1.5;}
+.record-info{display:flex;gap:6px;margin-top:4px;align-items:center;flex-wrap:wrap;}
+.record-tag{font-size:10px;padding:2px 7px;border-radius:10px;font-weight:600;}
+.record-tag.acc{background:var(--acc-pale);color:var(--acc);}
+.record-tag.run{background:var(--run-pale);color:var(--run);}
+.record-tag.rest{background:var(--rest-pale);color:var(--rest);}
+.record-tag.leak{background:var(--leak-pale);color:var(--leak);}
+.record-time{font-size:11px;color:var(--ink3);font-family:'DM Mono',monospace;}
+.record-hours{font-size:11px;color:var(--ink2);font-weight:600;}
+#sheets-section{background:var(--card);border-radius:var(--radius-sm);padding:12px 15px;border:1px solid var(--border);display:flex;align-items:center;gap:9px;}
+#sheets-section label{font-size:11px;color:var(--ink3);white-space:nowrap;font-weight:500;}
+#sheets-url{flex:1;padding:6px 9px;border:1px solid var(--border);border-radius:7px;font-size:11px;font-family:'DM Mono',monospace;color:var(--ink);outline:none;background:var(--bg);}
+#btn-save-sheets{padding:6px 12px;background:var(--blue);color:#fff;border:none;border-radius:7px;font-size:12px;font-family:'Outfit',sans-serif;font-weight:600;cursor:pointer;}
+
+/* ── GOALS PAGE ── */
+.sec-label{font-size:10px;font-weight:700;color:var(--ink3);letter-spacing:0.09em;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:10px;}
+.sec-label::after{content:'';flex:1;height:1px;background:var(--border);}
+#ai-wall-wrap{background:var(--card);border-radius:var(--radius);border:1px solid var(--border);padding:18px 20px;}
+#ai-wall-grid{display:grid;grid-template-columns:repeat(10,1fr);gap:5px;margin-bottom:10px;}
+.wall-cell{aspect-ratio:1;border-radius:6px;background:var(--bg);border:1px solid var(--border);cursor:default;transition:all 0.2s;display:flex;align-items:center;justify-content:center;font-size:10px;position:relative;}
+.wall-cell.lit{background:var(--yellow);border-color:var(--yellow-d);box-shadow:0 2px 8px rgba(240,200,74,0.35);cursor:pointer;}
+.wall-cell.lit:hover{transform:scale(1.18);z-index:5;}
+.wall-tooltip{display:none;position:absolute;bottom:calc(100%+5px);left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;font-size:10px;padding:3px 7px;border-radius:5px;white-space:nowrap;z-index:20;pointer-events:none;}
+.wall-cell.lit:hover .wall-tooltip{display:block;}
+#wall-footer{display:flex;justify-content:space-between;align-items:center;}
+#wall-count{font-size:12px;color:var(--ink3);}#wall-count strong{color:var(--ink);font-weight:700;}
+#btn-add-tool{padding:6px 14px;background:var(--yellow);color:var(--ink);border:none;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;}
+#btn-add-tool:hover{background:var(--yellow-d);color:#fff;}
+#goals-grid{display:grid;grid-template-columns:1fr 1fr;gap:13px;}
+.goal-card{background:var(--card);border-radius:var(--radius);border:1px solid var(--border);box-shadow:var(--shadow);overflow:hidden;transition:box-shadow 0.18s;cursor:pointer;}
+.goal-card:hover{box-shadow:var(--shadow-md);}
+.goal-card-head{padding:16px 18px 12px;}
+.goal-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px;}
+.goal-name{font-family:'DM Serif Display',serif;font-size:15px;color:var(--ink);line-height:1.3;margin-bottom:4px;}
+.goal-badges{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:6px;}
+.gbadge{font-size:10px;padding:2px 8px;border-radius:20px;font-weight:600;}
+.gbadge.active{background:var(--acc-pale);color:var(--acc);}
+.gbadge.planned{background:var(--rest-pale);color:var(--rest);}
+.gbadge.exam{background:var(--yellow-pale);color:var(--yellow-d);}
+.goal-desc{font-size:11px;color:var(--ink3);line-height:1.6;}
+.goal-emoji{font-size:22px;flex-shrink:0;}
+.goal-prog{padding:0 18px 14px;}
+.prog-labels{display:flex;justify-content:space-between;font-size:10px;color:var(--ink3);margin-bottom:4px;}
+.prog-bar-bg{height:4px;background:var(--bg);border-radius:2px;overflow:hidden;}
+.prog-fill{height:100%;border-radius:2px;transition:width 0.7s ease;}
+.prog-fill.acc{background:linear-gradient(90deg,var(--acc),#7EC4A7);}
+.prog-fill.exam{background:linear-gradient(90deg,var(--yellow-d),var(--yellow));}
+.prog-fill.rest{background:linear-gradient(90deg,var(--rest),#8AAEE0);}
+.prog-fill.grey{background:linear-gradient(90deg,#aaa,#ccc);}
+.goal-drawer{display:none;border-top:1px solid var(--border);background:var(--card2);padding:14px 18px;}
+.goal-drawer.open{display:block;}
+.drawer-label{font-size:10px;font-weight:700;color:var(--ink3);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:7px;}
+.ms-item{display:flex;align-items:center;gap:7px;padding:5px 0;border-bottom:1px solid var(--border);}
+.ms-item:last-child{border-bottom:none;}
+.ms-check{width:15px;height:15px;border-radius:4px;border:1.5px solid var(--border);cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px;color:#fff;transition:all 0.15s;}
+.ms-check.done{background:var(--acc);border-color:var(--acc);}
+.ms-text{font-size:12px;color:var(--ink);flex:1;}
+.ms-text.done{text-decoration:line-through;color:var(--ink3);}
+.drawer-section{margin-bottom:12px;}
+.drawer-section:last-child{margin-bottom:0;}
+.goal-ai-row{display:flex;gap:7px;margin-top:7px;}
+.goal-ai-input{flex:1;padding:7px 10px;border:1px solid var(--border);border-radius:7px;font-size:12px;font-family:'Outfit',sans-serif;color:var(--ink);background:var(--bg);outline:none;}
+.goal-ai-input:focus{border-color:var(--blue);}
+.btn-decompose{padding:7px 12px;background:var(--blue);color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:600;font-family:'Outfit',sans-serif;cursor:pointer;white-space:nowrap;}
+.action-row{display:flex;align-items:center;justify-content:space-between;padding:6px 9px;background:var(--bg);border-radius:7px;margin-bottom:4px;font-size:12px;color:var(--ink);}
+.action-right{display:flex;align-items:center;gap:5px;}
+.btn-to-cal{padding:3px 9px;background:var(--yellow);color:var(--ink);border:none;border-radius:10px;font-size:10px;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;}
+#ideas-wrap{background:var(--card);border-radius:var(--radius);border:1px solid var(--border);overflow:hidden;}
+#ideas-input-row{display:flex;border-bottom:1px solid var(--border);}
+#ideas-input{flex:1;padding:12px 16px;border:none;outline:none;font-family:'Outfit',sans-serif;font-size:13px;color:var(--ink);background:transparent;}
+#ideas-input::placeholder{color:var(--ink3);}
+#btn-add-idea{padding:10px 16px;background:var(--yellow);color:var(--ink);border:none;font-size:13px;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;}
+#btn-add-idea:hover{background:var(--yellow-d);color:#fff;}
+#ideas-list{max-height:200px;overflow-y:auto;padding:8px 12px;display:flex;flex-direction:column;gap:4px;}
+.idea-row{display:flex;align-items:flex-start;gap:9px;padding:7px 9px;background:var(--bg);border-radius:7px;animation:slideIn 0.2s ease;}
+.idea-dot{width:5px;height:5px;border-radius:50%;background:var(--yellow-d);margin-top:6px;flex-shrink:0;}
+.idea-text{font-size:12px;color:var(--ink);flex:1;line-height:1.5;}
+.idea-del{font-size:14px;color:var(--ink3);cursor:pointer;}
+.idea-del:hover{color:var(--leak);}
+.ideas-empty{font-size:12px;color:var(--ink3);text-align:center;padding:12px 0;}
+
+/* Tool Modal */
+#tool-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:200;align-items:center;justify-content:center;}
+#tool-modal.open{display:flex;}
+#tool-modal-box{background:var(--card);border-radius:var(--radius);padding:26px;width:400px;box-shadow:var(--shadow-md);}
+#tool-modal-box h3{font-family:'DM Serif Display',serif;font-size:19px;margin-bottom:16px;}
+.ml{font-size:11px;font-weight:600;color:var(--ink2);margin-bottom:4px;display:block;}
+.mi{width:100%;padding:8px 11px;border:1px solid var(--border);border-radius:7px;font-size:13px;font-family:'Outfit',sans-serif;color:var(--ink);background:var(--bg);outline:none;margin-bottom:10px;}
+.mi:focus{border-color:var(--blue);}
+.modal-btns{display:flex;gap:7px;}
+#btn-tool-save{flex:1;padding:9px;background:var(--blue);color:#fff;border:none;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Outfit',sans-serif;}
+#btn-tool-cancel{padding:9px 14px;background:var(--bg);color:var(--ink2);border:1px solid var(--border);border-radius:7px;font-size:13px;cursor:pointer;font-family:'Outfit',sans-serif;}
+
+/* Toast */
+#toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(14px);background:var(--ink);color:#fff;padding:9px 20px;border-radius:20px;font-size:13px;opacity:0;transition:all 0.26s;pointer-events:none;z-index:999;white-space:nowrap;font-weight:500;}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+#toast.cal{background:var(--acc);}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div id="sidebar">
+  <div id="sidebar-logo">
+    <div class="logo-icon">⏱</div>
+    <div class="logo-text">時間資產<span>Time Asset Manager</span></div>
+  </div>
+  <nav id="sidebar-nav">
+    <div class="nav-section-label">主選單</div>
+    <div class="nav-item active" data-page="today"><span class="nav-icon">📅</span>今日規劃</div>
+    <div class="nav-item" data-page="record"><span class="nav-icon">✍️</span>記錄時間</div>
+    <div class="nav-item" data-page="goals"><span class="nav-icon">🎯</span>目標管理</div>
+  </nav>
+  <div id="key-section">
+    <label>ANTHROPIC API KEY</label>
+    <div id="key-row">
+      <div id="key-dot"></div>
+      <input type="password" id="key-input" placeholder="sk-ant-api03-...">
+      <button id="btn-save-key">儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+
+<!-- ══ 今日規劃 ══ -->
+<div class="page active" id="page-today">
+
+  <!-- Hero Card -->
+  <div id="hero-card">
+    <div id="hero-left">
+      <div id="hero-greeting">早安，Wenshan 👋</div>
+      <div id="hero-title" id="hero-date-title">今天是美好的一天</div>
+      <div id="hero-chips">
+        <div class="hero-chip yellow" id="hero-day-chip">🔥 計算中</div>
+        <div class="hero-chip" id="hero-todo-chip">📋 待辦載入中</div>
+        <div class="hero-chip" id="hero-goal-chip">🎯 4 個進行中目標</div>
+      </div>
+    </div>
+    <div id="hero-illustration">
+      <!-- 中國風水墨插圖 SVG -->
+      <svg viewBox="0 0 200 150" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <!-- ink wash gradient for mountains -->
+          <radialGradient id="inkwash" cx="50%" cy="80%" r="60%">
+            <stop offset="0%" stop-color="rgba(255,255,255,0.18)"/>
+            <stop offset="100%" stop-color="rgba(255,255,255,0.03)"/>
+          </radialGradient>
+          <filter id="blur-sm"><feGaussianBlur stdDeviation="1.2"/></filter>
+          <filter id="blur-md"><feGaussianBlur stdDeviation="2.5"/></filter>
+        </defs>
+
+        <!-- 遠山（最淡，最遠） -->
+        <ellipse cx="60" cy="115" rx="55" ry="28" fill="rgba(255,255,255,0.06)" filter="url(#blur-md)"/>
+        <ellipse cx="150" cy="118" rx="48" ry="22" fill="rgba(255,255,255,0.05)" filter="url(#blur-md)"/>
+
+        <!-- 中山 -->
+        <path d="M10,120 Q35,72 60,90 Q80,70 100,85 Q115,65 135,85 Q155,75 180,105 L190,130 L0,130 Z"
+          fill="rgba(255,255,255,0.10)" filter="url(#blur-sm)"/>
+
+        <!-- 近山（主山體） -->
+        <path d="M30,130 Q55,78 80,95 Q95,65 115,82 Q130,58 150,78 Q165,70 185,105 L190,135 L20,135 Z"
+          fill="rgba(255,255,255,0.16)"/>
+
+        <!-- 山頂淡雪 -->
+        <path d="M93,68 Q95,60 100,62 Q105,58 108,65 Q104,70 100,68 Q96,70 93,68 Z"
+          fill="rgba(255,255,255,0.45)"/>
+        <path d="M128,62 Q131,54 135,56 Q139,52 142,59 Q138,64 135,62 Q131,64 128,62 Z"
+          fill="rgba(255,255,255,0.35)"/>
+
+        <!-- 水面倒影（底部） -->
+        <rect x="0" y="128" width="200" height="22" fill="rgba(255,255,255,0.07)" rx="2"/>
+        <path d="M20,132 Q60,129 100,133 Q140,129 180,132" stroke="rgba(255,255,255,0.18)" stroke-width="0.8" fill="none"/>
+        <path d="M10,136 Q55,134 100,137 Q145,134 190,136" stroke="rgba(255,255,255,0.12)" stroke-width="0.6" fill="none"/>
+
+        <!-- 松樹（左） -->
+        <line x1="42" y1="130" x2="42" y2="100" stroke="rgba(255,255,255,0.5)" stroke-width="1.2"/>
+        <path d="M42,102 Q38,110 34,112 Q38,108 42,110 Q46,108 50,112 Q46,110 42,110 Z" fill="rgba(255,255,255,0.35)"/>
+        <path d="M42,96 Q37,104 33,106 Q37,102 42,104 Q47,102 51,106 Q47,104 42,104 Z" fill="rgba(255,255,255,0.30)"/>
+        <path d="M42,90 Q38,97 35,99 Q38,95 42,97 Q46,95 49,99 Q46,97 42,97 Z" fill="rgba(255,255,255,0.25)"/>
+
+        <!-- 松樹（右，較小） -->
+        <line x1="168" y1="128" x2="168" y2="104" stroke="rgba(255,255,255,0.4)" stroke-width="1"/>
+        <path d="M168,106 Q164,113 161,115 Q164,111 168,113 Q172,111 175,115 Q172,113 168,113 Z" fill="rgba(255,255,255,0.28)"/>
+        <path d="M168,100 Q165,106 162,108 Q165,104 168,106 Q171,104 174,108 Q171,106 168,106 Z" fill="rgba(255,255,255,0.22)"/>
+
+        <!-- 浮雲（水墨暈染風格） -->
+        <ellipse cx="75" cy="38" rx="22" ry="9" fill="rgba(255,255,255,0.18)" filter="url(#blur-sm)"/>
+        <ellipse cx="85" cy="35" rx="16" ry="7" fill="rgba(255,255,255,0.22)" filter="url(#blur-sm)"/>
+        <ellipse cx="65" cy="40" rx="14" ry="6" fill="rgba(255,255,255,0.15)" filter="url(#blur-sm)"/>
+
+        <ellipse cx="148" cy="28" rx="18" ry="7" fill="rgba(255,255,255,0.15)" filter="url(#blur-sm)"/>
+        <ellipse cx="156" cy="25" rx="13" ry="6" fill="rgba(255,255,255,0.20)" filter="url(#blur-sm)"/>
+
+        <!-- 一輪明月 -->
+        <circle cx="160" cy="42" r="14" fill="rgba(255,255,255,0.12)" filter="url(#blur-sm)"/>
+        <circle cx="160" cy="42" r="10" fill="rgba(255,255,255,0.22)"/>
+        <circle cx="160" cy="42" r="7" fill="rgba(255,255,255,0.30)"/>
+
+        <!-- 飛鳥（極簡筆觸） -->
+        <path d="M100,22 Q103,19 106,22" stroke="rgba(255,255,255,0.6)" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+        <path d="M110,18 Q113,15 116,18" stroke="rgba(255,255,255,0.5)" stroke-width="1" fill="none" stroke-linecap="round"/>
+        <path d="M120,24 Q122,21 125,24" stroke="rgba(255,255,255,0.4)" stroke-width="0.9" fill="none" stroke-linecap="round"/>
+
+        <!-- 金色裝飾點（呼應 hero 配色） -->
+        <circle cx="30" cy="25" r="2.5" fill="rgba(240,200,74,0.5)"/>
+        <circle cx="185" cy="80" r="1.8" fill="rgba(240,200,74,0.4)"/>
+        <circle cx="22" cy="60" r="1.5" fill="rgba(255,255,255,0.3)"/>
+
+        <!-- 底部留白（水墨意境） -->
+        <rect x="0" y="138" width="200" height="12" fill="rgba(255,255,255,0.04)"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div id="stats-row">
+    <div class="stat-chip">
+      <div class="stat-icon acc">🌱</div>
+      <div class="stat-right"><div class="stat-num acc" id="stat-acc">0h</div><div class="stat-label">蓄積型</div></div>
+    </div>
+    <div class="stat-chip">
+      <div class="stat-icon run">⚡</div>
+      <div class="stat-right"><div class="stat-num run" id="stat-run">0h</div><div class="stat-label">運作型</div></div>
+    </div>
+    <div class="stat-chip">
+      <div class="stat-icon rest">🌊</div>
+      <div class="stat-right"><div class="stat-num rest" id="stat-rest">0h</div><div class="stat-label">休息型</div></div>
+    </div>
+    <div class="stat-chip">
+      <div class="stat-icon leak">💧</div>
+      <div class="stat-right"><div class="stat-num leak" id="stat-leak">0h</div><div class="stat-label">漏損型</div></div>
+    </div>
+  </div>
+
+  <!-- Calendar + Right panel -->
+  <div id="today-layout">
+    <div id="cal-panel">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div class="cal-view-tabs">
+          <button class="cal-tab active" data-view="month">月</button>
+          <button class="cal-tab" data-view="week">週</button>
+          <button class="cal-tab" data-view="day">日</button>
+          <button class="cal-tab" data-view="agenda">行程表</button>
+        </div>
+        <a href="https://calendar.google.com" target="_blank" style="font-size:11px;color:var(--ink3);text-decoration:none;">↗ 在 Google 日曆開啟</a>
+      </div>
+      <div id="cal-embed-wrap">
+        <iframe id="cal-iframe"
+          src="https://calendar.google.com/calendar/embed?src=wenshan1126%40gmail.com&ctz=Asia%2FTaipei&mode=MONTH&showTitle=0&showNav=1&showDate=1&showPrint=0&showTabs=0&showCalendars=0&showTz=0&hl=zh_TW"
+          frameborder="0" scrolling="no"></iframe>
+      </div>
+    </div>
+
+    <div id="right-panel">
+      <div class="card" id="todo-card">
+        <div class="card-title">
+          <div>✅ 今日待辦</div>
+          <span id="todo-count" style="font-size:11px;color:var(--ink3);font-weight:400;text-transform:none;letter-spacing:0"></span>
+        </div>
+        <div id="todo-list"></div>
+        <div id="todo-add-row">
+          <input type="text" id="todo-input" placeholder="新增待辦...">
+          <button id="btn-add-todo">+</button>
+        </div>
+      </div>
+
+      <div id="voice-card">
+        <div class="card-title">🎙 語音新增行程</div>
+        <div id="voice-wrap">
+          <textarea id="ai-sched-box" rows="2" placeholder="說出行程，例如：「明天下午三點開客戶會議兩小時」"></textarea>
+          <button id="btn-voice-sched">🎤</button>
+        </div>
+        <button id="btn-ai-sched">AI 解析並排進日曆 →</button>
+        <div id="sched-feedback"></div>
+        <div id="manual-toggle">▾ 手動填寫</div>
+        <div id="manual-form">
+          <div class="mf-row">
+            <input type="text" id="sched-title" placeholder="行程名稱">
+            <select id="sched-color">
+              <option value="acc">蓄積型</option>
+              <option value="run" selected>運作型</option>
+              <option value="rest">休息型</option>
+              <option value="leak">漏損型</option>
+            </select>
+          </div>
+          <div class="mf-row">
+            <input type="date" id="sched-date">
+            <input type="time" id="sched-start">
+            <input type="time" id="sched-end">
+          </div>
+          <button id="btn-manual-add">新增到日曆</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 記錄時間 ══ -->
+<div class="page" id="page-record">
+  <div class="pg-head"><div class="pg-title">記錄時間</div><div class="pg-sub">說出剛才做了什麼，AI 自動分類</div></div>
+  <div id="input-area">
+    <textarea id="input-box" placeholder="例：剛才花了兩小時寫提案、開了一小時客戶會議..."></textarea>
+    <div id="input-toolbar">
+      <div class="quick-tags">
+        <span class="qtag" data-type="acc">蓄積型</span>
+        <span class="qtag" data-type="run">運作型</span>
+        <span class="qtag" data-type="rest">休息型</span>
+        <span class="qtag" data-type="leak">漏損型</span>
+      </div>
+      <div class="toolbar-right">
+        <button id="btn-mic">🎤</button>
+        <button id="btn-send">送出 ↵</button>
+      </div>
+    </div>
+  </div>
+  <div id="sheets-section">
+    <label>Sheets URL</label>
+    <input type="text" id="sheets-url" placeholder="Google Sheets 試算表網址">
+    <button id="btn-save-sheets">儲存</button>
+  </div>
+  <div id="records-list"></div>
+</div>
+
+<!-- ══ 目標管理 ══ -->
+<div class="page" id="page-goals">
+  <div class="pg-head"><div class="pg-title">目標管理</div><div class="pg-sub">你的人生戰略版</div></div>
+  <div><div class="sec-label">🤖 AI 工具成就牆</div>
+    <div id="ai-wall-wrap">
+      <div id="ai-wall-grid"></div>
+      <div id="wall-footer"><div id="wall-count">已完成 <strong id="wall-lit">0</strong> / 100 個工具</div><button id="btn-add-tool">+ 登記新工具</button></div>
+    </div>
+  </div>
+  <div><div class="sec-label">🔥 進行中目標</div>
+    <div id="goals-grid">
+      <div class="goal-card" data-goal="ig">
+        <div class="goal-card-head"><div class="goal-top"><div><div class="goal-name">@shan_visible IG 日更</div><div class="goal-badges"><span class="gbadge active">進行中</span><span class="gbadge exam" id="ig-streak">🔥 計算中</span></div><div class="goal-desc">個人品牌帳號，每日發文，分享真實 AI 輔助工作體驗。</div></div><div class="goal-emoji">📱</div></div></div>
+        <div class="goal-prog"><div class="prog-labels"><span>本月進度</span><span id="ig-prog-label">...</span></div><div class="prog-bar-bg"><div class="prog-fill acc" id="ig-bar" style="width:0%"></div></div></div>
+        <div class="goal-drawer" id="drawer-ig"><div class="drawer-section"><div class="drawer-label">里程碑</div><div id="ms-ig"></div></div><div class="drawer-section"><div class="drawer-label">AI 拆解微行動</div><div class="goal-ai-row"><input type="text" class="goal-ai-input" id="gai-ig" placeholder="這週想推進什麼？"><button class="btn-decompose" data-goal="ig">拆解 →</button></div><div id="gai-result-ig"></div></div></div>
+      </div>
+      <div class="goal-card" data-goal="google">
+        <div class="goal-card-head"><div class="goal-top"><div><div class="goal-name">Google 數位人才探索計畫</div><div class="goal-badges"><span class="gbadge exam">備考中</span><span class="gbadge exam" id="google-countdown">⏳ 計算中</span></div><div class="goal-desc">AI 職場通識 ＋ 數位行銷，報名截止 2026/8/10。</div></div><div class="goal-emoji">🎓</div></div></div>
+        <div class="goal-prog"><div class="prog-labels"><span>距截止日</span><span id="google-prog-label">...</span></div><div class="prog-bar-bg"><div class="prog-fill exam" id="google-bar" style="width:0%"></div></div></div>
+        <div class="goal-drawer" id="drawer-google"><div class="drawer-section"><div class="drawer-label">里程碑</div><div id="ms-google"></div></div><div class="drawer-section"><div class="drawer-label">AI 拆解微行動</div><div class="goal-ai-row"><input type="text" class="goal-ai-input" id="gai-google" placeholder="這週想推進什麼？"><button class="btn-decompose" data-goal="google">拆解 →</button></div><div id="gai-result-google"></div></div></div>
+      </div>
+      <div class="goal-card" data-goal="ipas">
+        <div class="goal-card-head"><div class="goal-top"><div><div class="goal-name">iPAS AI 應用規劃師初級</div><div class="goal-badges"><span class="gbadge planned">等公告</span><span class="gbadge planned">下半年</span></div><div class="goal-desc">等待報名公告，持續累積 AI 工具作品集。</div></div><div class="goal-emoji">📜</div></div></div>
+        <div class="goal-prog"><div class="prog-labels"><span>準備進度（自評）</span><span>45%</span></div><div class="prog-bar-bg"><div class="prog-fill rest" style="width:45%"></div></div></div>
+        <div class="goal-drawer" id="drawer-ipas"><div class="drawer-section"><div class="drawer-label">里程碑</div><div id="ms-ipas"></div></div><div class="drawer-section"><div class="drawer-label">AI 拆解微行動</div><div class="goal-ai-row"><input type="text" class="goal-ai-input" id="gai-ipas" placeholder="這週想推進什麼？"><button class="btn-decompose" data-goal="ipas">拆解 →</button></div><div id="gai-result-ipas"></div></div></div>
+      </div>
+      <div class="goal-card" data-goal="yt">
+        <div class="goal-card-head"><div class="goal-top"><div><div class="goal-name">YT 聲聲慢頻道</div><div class="goal-badges"><span class="gbadge planned">規劃中</span></div><div class="goal-desc">AI 輔助聲音內容頻道，概念與定位規劃中。</div></div><div class="goal-emoji">🎵</div></div></div>
+        <div class="goal-prog"><div class="prog-labels"><span>規劃完成度</span><span>15%</span></div><div class="prog-bar-bg"><div class="prog-fill grey" style="width:15%"></div></div></div>
+        <div class="goal-drawer" id="drawer-yt"><div class="drawer-section"><div class="drawer-label">里程碑</div><div id="ms-yt"></div></div><div class="drawer-section"><div class="drawer-label">AI 拆解微行動</div><div class="goal-ai-row"><input type="text" class="goal-ai-input" id="gai-yt" placeholder="這週想推進什麼？"><button class="btn-decompose" data-goal="yt">拆解 →</button></div><div id="gai-result-yt"></div></div></div>
+      </div>
+    </div>
+  </div>
+  <div><div class="sec-label">💡 新想法暫存區</div>
+    <div id="ideas-wrap">
+      <div id="ideas-input-row"><input type="text" id="ideas-input" placeholder="隨時丟進來，不讓好想法消失..."><button id="btn-add-idea">存入 →</button></div>
+      <div id="ideas-list"></div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<!-- Tool Modal -->
+<div id="tool-modal">
+  <div id="tool-modal-box">
+    <h3>登記新 AI 工具 ✦</h3>
+    <label class="ml">工具名稱</label><input type="text" class="mi" id="tool-name" placeholder="例：客戶訪談分析工具">
+    <label class="ml">簡短描述</label><input type="text" class="mi" id="tool-desc" placeholder="這個工具是做什麼的">
+    <label class="ml">網址（選填）</label><input type="text" class="mi" id="tool-url" placeholder="https://...">
+    <label class="ml">完成日期</label><input type="date" class="mi" id="tool-date">
+    <div class="modal-btns"><button id="btn-tool-cancel">取消</button><button id="btn-tool-save">儲存 ✦</button></div>
+  </div>
+</div>
+<div id="toast"></div>
+
+<script>
+const GAS_URL='https://script.google.com/macros/s/AKfycbxsgkx0w9lW6rYKn4CI_MWn4wnVARpjqC6E7qeIBySkfDERi325ZDeuXbeq9j3y376v/exec';
+const CAL_BASE='https://calendar.google.com/calendar/embed?src=wenshan1126%40gmail.com&ctz=Asia%2FTaipei&showTitle=0&showNav=1&showDate=1&showPrint=0&showTabs=0&showCalendars=0&showTz=0&hl=zh_TW&mode=';
+const CAL_MODES={month:'MONTH',week:'WEEK',day:'DAY',agenda:'AGENDA'};
+let apiKey=localStorage.getItem('tas_apikey')||'';
+let sheetsUrl=localStorage.getItem('tas_sheets')||'';
+let records=JSON.parse(localStorage.getItem('tas_records')||'[]');
+let isRecording=false,recognition=null,isRecordingVoice=false,recognitionVoice=null;
+let manualOpen=false,goalsInited=false;
+const MILESTONES_DEFAULT={
+  ig:[{text:'開設帳號並完成個人資料',done:true},{text:'發出第一篇貼文',done:true},{text:'累積 10 篇貼文',done:false},{text:'達到 100 個追蹤者',done:false},{text:'連續發文 30 天',done:false}],
+  google:[{text:'確認報名資格與課程內容',done:false},{text:'完成 AI 職場通識課程',done:false},{text:'完成數位行銷課程',done:false},{text:'報名並取得認證',done:false}],
+  ipas:[{text:'取得考試大綱',done:false},{text:'完成 10 個 AI 工具實作',done:true},{text:'建立 AI 應用作品集',done:false},{text:'報名並參加考試',done:false}],
+  yt:[{text:'確定頻道定位與內容策略',done:false},{text:'製作第一支試播影片',done:false},{text:'發布第一支正式影片',done:false}]
+};
+const GOAL_NAMES={ig:'@shan_visible IG 日更',google:'Google 數位人才探索計畫',ipas:'iPAS AI 應用規劃師',yt:'YT 聲聲慢頻道'};
+
+document.addEventListener('DOMContentLoaded',()=>{
+  // Init
+  if(apiKey){document.getElementById('key-input').value=apiKey;document.getElementById('key-dot').className='ok';}
+  if(sheetsUrl) document.getElementById('sheets-url').value=sheetsUrl;
+  document.getElementById('sched-date').value=getTodayISO();
+  updateHero(); renderRecords(); updateStats(); renderTodos();
+
+  // Nav
+  document.querySelectorAll('.nav-item').forEach(item=>{
+    item.addEventListener('click',()=>{
+      document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+      document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+      item.classList.add('active');
+      document.getElementById('page-'+item.dataset.page).classList.add('active');
+      if(item.dataset.page==='goals'&&!goalsInited){initGoalsPage();goalsInited=true;}
+    });
+  });
+
+  // Cal tabs
+  document.querySelectorAll('.cal-tab').forEach(tab=>{
+    tab.addEventListener('click',()=>{
+      document.querySelectorAll('.cal-tab').forEach(t=>t.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById('cal-iframe').src=CAL_BASE+CAL_MODES[tab.dataset.view];
+    });
+  });
+
+  document.getElementById('btn-save-key').addEventListener('click',()=>{
+    apiKey=document.getElementById('key-input').value.trim();
+    localStorage.setItem('tas_apikey',apiKey);
+    document.getElementById('key-dot').className=apiKey?'ok':'';
+    showToast('API Key 已儲存');
+  });
+  document.getElementById('btn-save-sheets').addEventListener('click',()=>{
+    sheetsUrl=document.getElementById('sheets-url').value.trim();
+    localStorage.setItem('tas_sheets',sheetsUrl);showToast('Sheets 已儲存');
+  });
+  document.getElementById('btn-send').addEventListener('click',handleRecord);
+  document.getElementById('input-box').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();handleRecord();}});
+  document.querySelectorAll('.qtag').forEach(tag=>{
+    tag.addEventListener('click',()=>{
+      const labels={acc:'蓄積型',run:'運作型',rest:'休息型',leak:'漏損型'};
+      const box=document.getElementById('input-box');
+      box.value+=(box.value?' ':'')+('['+labels[tag.dataset.type]+'] ');box.focus();
+    });
+  });
+  document.getElementById('btn-mic').addEventListener('click',toggleMic);
+  document.getElementById('btn-ai-sched').addEventListener('click',handleAiSchedule);
+  document.getElementById('btn-voice-sched').addEventListener('click',toggleVoiceSched);
+  document.getElementById('ai-sched-box').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();handleAiSchedule();}});
+  document.getElementById('manual-toggle').addEventListener('click',()=>{
+    manualOpen=!manualOpen;
+    document.getElementById('manual-form').className=manualOpen?'open':'';
+    document.getElementById('manual-toggle').textContent=manualOpen?'▴ 收起':'▾ 手動填寫';
+  });
+  document.getElementById('btn-manual-add').addEventListener('click',handleAddEvent);
+  document.getElementById('btn-add-todo').addEventListener('click',addTodo);
+  document.getElementById('todo-input').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addTodo();}});
+  document.getElementById('btn-add-idea').addEventListener('click',addIdea);
+  document.getElementById('ideas-input').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addIdea();}});
+});
+
+function updateHero(){
+  const now=new Date();
+  const h=now.getHours();
+  document.getElementById('hero-greeting').textContent=(h<12?'早安':h<18?'午安':'晚安')+`，Wenshan 👋`;
+  document.getElementById('hero-title').textContent=now.toLocaleDateString('zh-TW',{month:'long',day:'numeric',weekday:'long'});
+  const day=now.getDate();
+  document.getElementById('hero-day-chip').textContent=`🔥 IG 第 ${day} 天`;
+  updateHeroTodo();
+}
+function updateHeroTodo(){
+  const todos=getTodos();
+  const done=todos.filter(t=>t.done).length;
+  document.getElementById('hero-todo-chip').textContent=todos.length?`📋 ${done}/${todos.length} 完成`:'📋 今日待辦空的';
+}
+
+// Voice
+function toggleVoiceSched(){
+  if(!('webkitSpeechRecognition' in window)&&!('SpeechRecognition' in window)){showToast('瀏覽器不支援語音');return;}
+  if(isRecordingVoice){recognitionVoice&&recognitionVoice.stop();return;}
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  recognitionVoice=new SR();recognitionVoice.lang='zh-TW';
+  recognitionVoice.onstart=()=>{isRecordingVoice=true;document.getElementById('btn-voice-sched').classList.add('recording');};
+  recognitionVoice.onresult=e=>{document.getElementById('ai-sched-box').value+=e.results[0][0].transcript;};
+  recognitionVoice.onend=()=>{isRecordingVoice=false;document.getElementById('btn-voice-sched').classList.remove('recording');};
+  recognitionVoice.start();
+}
+async function handleAiSchedule(){
+  const text=document.getElementById('ai-sched-box').value.trim();
+  if(!text) return;
+  const btn=document.getElementById('btn-ai-sched');
+  btn.textContent='AI 解析中...';btn.style.opacity='0.6';btn.style.pointerEvents='none';
+  try{
+    const prompt='今天是'+new Date().toLocaleDateString('zh-TW',{year:'numeric',month:'long',day:'numeric',weekday:'long'})+'（'+getTodayISO()+'）。用戶說：「'+text+'」\n只回傳JSON：{"title":"行程名稱","date":"yyyy-MM-dd","startTime":"HH:mm","endTime":"HH:mm","color":"acc或run或rest或leak"}\ncolor：學習/創作→acc；客戶/工作/會議→run；休息/運動→rest；無效等待→leak。';
+    const res=await fetch(GAS_URL+'?action=claudeProxy&maxTokens=300&prompt='+encodeURIComponent(prompt));
+    const aiData=await res.json();
+    if(!aiData.ok) throw new Error(aiData.error||'GAS 呼叫失敗');
+    const json=JSON.parse(aiData.text.replace(/```json|```/g,'').trim());
+    const fb=document.getElementById('sched-feedback');
+    fb.textContent='✓ '+json.date+' '+json.startTime+'–'+json.endTime+'「'+json.title+'」送出中...';fb.style.color='rgba(255,255,255,0.6)';
+    const params=new URLSearchParams({action:'addEvent',title:json.title,date:json.date,startTime:json.startTime,endTime:json.endTime,color:json.color});
+    const r2=await fetch(GAS_URL+'?'+params.toString());const d2=await r2.json();
+    if(!d2.ok) throw new Error(d2.error||d2.message);
+    fb.textContent='✓ 已排進 Google 日曆！';fb.style.color='#7EC4A7';showToast('行程已新增！','cal');
+    const iframe=document.getElementById('cal-iframe');const src=iframe.src;iframe.src='';setTimeout(()=>{iframe.src=src;},300);
+    document.getElementById('ai-sched-box').value='';setTimeout(()=>{fb.textContent='';},3000);
+  }catch(e){document.getElementById('sched-feedback').textContent='⚠️ 失敗：'+e.message;document.getElementById('sched-feedback').style.color='#E07070';}
+  finally{btn.textContent='AI 解析並排進日曆 →';btn.style.opacity='';btn.style.pointerEvents='';}
+}
+async function handleAddEvent(){
+  const title=document.getElementById('sched-title').value.trim();const date=document.getElementById('sched-date').value;
+  const start=document.getElementById('sched-start').value;const end=document.getElementById('sched-end').value;const color=document.getElementById('sched-color').value;
+  if(!title||!date||!start||!end){showToast('請填完所有欄位');return;}
+  const fb=document.getElementById('sched-feedback');fb.textContent='新增中...';fb.style.color='rgba(255,255,255,0.5)';
+  try{
+    const params=new URLSearchParams({action:'addEvent',title,date,startTime:start,endTime:end,color});
+    const res=await fetch(GAS_URL+'?'+params.toString());const data=await res.json();
+    if(!data.ok) throw new Error(data.error||data.message);
+    fb.textContent='✓ 已加入！';fb.style.color='#7EC4A7';showToast('行程已新增！','cal');
+    const iframe=document.getElementById('cal-iframe');const src=iframe.src;iframe.src='';setTimeout(()=>{iframe.src=src;},300);
+    ['sched-title','sched-start','sched-end'].forEach(id=>document.getElementById(id).value='');setTimeout(()=>{fb.textContent='';},3000);
+  }catch(e){fb.textContent='⚠️ 失敗：'+e.message;fb.style.color='#E07070';}
+}
+
+// Todo
+function getTodayISO(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function getTodos(){return JSON.parse(localStorage.getItem('tas_todos_'+getTodayISO())||'[]');}
+function saveTodos(t){localStorage.setItem('tas_todos_'+getTodayISO(),JSON.stringify(t));}
+function renderTodos(){
+  const list=document.getElementById('todo-list'),todos=getTodos();
+  const done=todos.filter(t=>t.done).length;
+  document.getElementById('todo-count').textContent=todos.length?`${done}/${todos.length} 完成`:'';
+  if(!todos.length){list.innerHTML='<div style="font-size:12px;color:var(--ink3);text-align:center;padding:10px 0">今天還沒有待辦</div>';updateHeroTodo();return;}
+  list.innerHTML=todos.map((t,i)=>`<div class="todo-item"><div class="todo-check ${t.done?'done':''}" data-i="${i}">${t.done?'✓':''}</div><div class="todo-text ${t.done?'done':''}">${t.text}</div><span class="todo-del" onclick="deleteTodo(${i})">×</span></div>`).join('');
+  list.querySelectorAll('.todo-check').forEach(el=>{
+    el.addEventListener('click',()=>{const todos=getTodos();todos[parseInt(el.dataset.i)].done=!todos[parseInt(el.dataset.i)].done;saveTodos(todos);renderTodos();});
+  });
+  updateHeroTodo();
+}
+function addTodo(){const input=document.getElementById('todo-input'),text=input.value.trim();if(!text) return;const todos=getTodos();todos.push({text,done:false});saveTodos(todos);renderTodos();input.value='';}
+function deleteTodo(i){const todos=getTodos();todos.splice(i,1);saveTodos(todos);renderTodos();}
+
+// Record
+async function handleRecord(){
+  const box=document.getElementById('input-box'),text=box.value.trim();if(!text) return;
+  const btn=document.getElementById('btn-send');btn.classList.add('loading');btn.textContent='分析中...';
+  const timeStr=new Date().toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'});
+  try{
+    const prompt='用戶記錄：「'+text+'」\n只回傳JSON：{"type":"acc或run或rest或leak","hours":數字,"summary":"10字內摘要"}\nacc=學習/創作/成長；run=客戶/工作/會議；rest=休息/運動/娛樂；leak=無效等待/分心。沒有時間資訊hours填0。';
+    const res=await fetch(GAS_URL+'?action=claudeProxy&maxTokens=200&prompt='+encodeURIComponent(prompt));
+    const aiData=await res.json();
+    if(!aiData.ok) throw new Error(aiData.error||'GAS 呼叫失敗');
+    const json=JSON.parse(aiData.text.replace(/```json|```/g,'').trim());
+    const record={id:Date.now(),text,type:json.type||'run',hours:json.hours||0,summary:json.summary||text.slice(0,15),time:timeStr,date:getTodayISO()};
+    records.unshift(record);localStorage.setItem('tas_records',JSON.stringify(records));
+    renderRecords();updateStats();box.value='';showToast('已記錄！');
+  }catch(e){showToast('分析失敗：'+e.message);}
+  finally{btn.classList.remove('loading');btn.textContent='送出 ↵';}
+}
+function renderRecords(){
+  const list=document.getElementById('records-list'),typeMap={acc:'蓄積型',run:'運作型',rest:'休息型',leak:'漏損型'};
+  if(!records.length){list.innerHTML='<div style="text-align:center;color:var(--ink3);font-size:13px;padding:22px">還沒有記錄</div>';return;}
+  list.innerHTML=records.slice(0,20).map(r=>`<div class="record-card" data-type="${r.type}"><div class="record-meta"><div class="record-text">${r.text}</div><div class="record-info"><span class="record-tag ${r.type}">${typeMap[r.type]}</span>${r.hours>0?`<span class="record-hours">${r.hours}h</span>`:''}<span class="record-time">${r.time||''}</span></div></div></div>`).join('');
+}
+function updateStats(){
+  const today=getTodayISO(),todayRecs=records.filter(r=>r.date===today);
+  const sum=t=>todayRecs.filter(r=>r.type===t).reduce((a,r)=>a+(r.hours||0),0);
+  ['acc','run','rest','leak'].forEach(t=>{document.getElementById('stat-'+t).textContent=sum(t)+'h';});
+}
+
+// Mic
+function toggleMic(){
+  if(!('webkitSpeechRecognition' in window)&&!('SpeechRecognition' in window)){showToast('瀏覽器不支援語音');return;}
+  if(isRecording){recognition&&recognition.stop();return;}
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  recognition=new SR();recognition.lang='zh-TW';
+  recognition.onstart=()=>{isRecording=true;document.getElementById('btn-mic').classList.add('recording');};
+  recognition.onresult=e=>{document.getElementById('input-box').value+=e.results[0][0].transcript;};
+  recognition.onend=()=>{isRecording=false;document.getElementById('btn-mic').classList.remove('recording');};
+  recognition.start();
+}
+
+// Goals
+function initGoalsPage(){
+  renderAiWall();updateGoalCountdowns();renderAllMilestones();renderIdeas();bindGoalCards();bindDecomposeButtons();
+  document.getElementById('btn-add-tool').addEventListener('click',()=>{document.getElementById('tool-date').value=getTodayISO();document.getElementById('tool-modal').className='open';});
+  document.getElementById('btn-tool-cancel').addEventListener('click',()=>document.getElementById('tool-modal').className='');
+  document.getElementById('btn-tool-save').addEventListener('click',saveTool);
+}
+function getTools(){
+  const stored=localStorage.getItem('tas_tools');if(stored) return JSON.parse(stored);
+  const d=[{name:'K 腳本生成工具',desc:'保險業務員短影音腳本生成器',url:'https://zillioco-max.github.io/k-script-tool',date:'2026-01-01'},{name:'SEO 舊文改寫系統',desc:'批次 SEO 文章重寫自動化',url:'',date:'2026-03-01'},{name:'Threads 海巡系統',desc:'Threads 內容監控觸發流程',url:'',date:'2026-03-01'},{name:'IG 自動化流程',desc:'Instagram 排程自動化測試',url:'',date:'2026-03-01'},{name:'財務性格測驗',desc:'保險客戶財務性格問卷',url:'https://zillioco-max.github.io/quiz',date:'2026-02-01'},{name:'禎美樓 Menu 頁',desc:'台菜餐廳線上菜單展示頁',url:'https://zillioco-max.github.io/menu',date:'2026-01-01'}];
+  localStorage.setItem('tas_tools',JSON.stringify(d));return d;
+}
+function renderAiWall(){
+  const tools=getTools(),grid=document.getElementById('ai-wall-grid');
+  let html='';
+  for(let i=0;i<100;i++){if(i<tools.length){const t=tools[i];html+=`<div class="wall-cell lit" data-i="${i}"><span class="wall-tooltip">${t.name}</span>✦</div>`;}else html+=`<div class="wall-cell"></div>`;}
+  grid.innerHTML=html;document.getElementById('wall-lit').textContent=tools.length;
+  grid.querySelectorAll('.wall-cell.lit').forEach(cell=>{cell.addEventListener('click',()=>{const t=getTools()[parseInt(cell.dataset.i)];showToast(t.name+(t.url?' · 開啟中':' · 本機工具'),'cal');if(t.url) setTimeout(()=>window.open(t.url,'_blank'),400);});});
+}
+function saveTool(){
+  const name=document.getElementById('tool-name').value.trim();if(!name){showToast('請填寫工具名稱');return;}
+  const tools=getTools();tools.push({name,desc:document.getElementById('tool-desc').value.trim(),url:document.getElementById('tool-url').value.trim(),date:document.getElementById('tool-date').value});
+  localStorage.setItem('tas_tools',JSON.stringify(tools));renderAiWall();document.getElementById('tool-modal').className='';
+  ['tool-name','tool-desc','tool-url'].forEach(id=>document.getElementById(id).value='');showToast('✦ 新工具已登記！');
+}
+function updateGoalCountdowns(){
+  const now=new Date(),month=now.getMonth(),year=now.getFullYear(),day=now.getDate();
+  const dim=new Date(year,month+1,0).getDate();
+  document.getElementById('ig-bar').style.width=Math.round((day/dim)*100)+'%';
+  document.getElementById('ig-prog-label').textContent=`${day}/${dim} 天`;
+  document.getElementById('ig-streak').textContent=`🔥 第 ${day} 天`;
+  const deadline=new Date('2026-08-10'),startRef=new Date('2026-04-28');
+  const total=Math.ceil((deadline-startRef)/86400000),remain=Math.max(0,Math.ceil((deadline-now)/86400000));
+  document.getElementById('google-bar').style.width=Math.min(100,Math.round(((total-remain)/total)*100))+'%';
+  document.getElementById('google-prog-label').textContent=`剩 ${remain} 天`;
+  document.getElementById('google-countdown').textContent=`⏳ 還有 ${remain} 天`;
+}
+function getMilestones(id){const s=localStorage.getItem('tas_ms_'+id);return s?JSON.parse(s):(MILESTONES_DEFAULT[id]||[]);}
+function saveMilestones(id,items){localStorage.setItem('tas_ms_'+id,JSON.stringify(items));}
+function renderAllMilestones(){['ig','google','ipas','yt'].forEach(renderMilestones);}
+function renderMilestones(id){
+  const el=document.getElementById('ms-'+id);if(!el) return;
+  const items=getMilestones(id);
+  el.innerHTML=items.map((m,i)=>`<div class="ms-item"><div class="ms-check ${m.done?'done':''}" data-goal="${id}" data-i="${i}">${m.done?'✓':''}</div><div class="ms-text ${m.done?'done':''}">${m.text}</div></div>`).join('');
+  el.querySelectorAll('.ms-check').forEach(c=>{c.addEventListener('click',e=>{e.stopPropagation();const items=getMilestones(c.dataset.goal);items[parseInt(c.dataset.i)].done=!items[parseInt(c.dataset.i)].done;saveMilestones(c.dataset.goal,items);renderMilestones(c.dataset.goal);});});
+}
+function bindGoalCards(){
+  document.querySelectorAll('.goal-card').forEach(card=>{
+    card.addEventListener('click',e=>{
+      if(e.target.closest('.goal-drawer')||e.target.closest('.ms-check')) return;
+      const id=card.dataset.goal,drawer=document.getElementById('drawer-'+id);if(!drawer) return;
+      const open=drawer.classList.contains('open');
+      document.querySelectorAll('.goal-drawer').forEach(d=>d.classList.remove('open'));
+      if(!open) drawer.classList.add('open');
+    });
+  });
+}
+function bindDecomposeButtons(){
+  document.querySelectorAll('.btn-decompose').forEach(btn=>{
+    btn.addEventListener('click',async e=>{
+      e.stopPropagation();const goalId=btn.dataset.goal,inputEl=document.getElementById('gai-'+goalId);
+      const direction=inputEl?inputEl.value.trim():'';if(!direction){showToast('請輸入這週想推進的方向');return;}
+      btn.textContent='拆解中...';btn.style.opacity='0.6';
+      try{
+        const prompt='目標：'+GOAL_NAMES[goalId]+'\n這週想推進：「'+direction+'」\n今天：'+new Date().toLocaleDateString('zh-TW')+'\n拆解成 3–4 個具體微行動（15分鐘到2小時內可完成），只回傳JSON：\n[{"action":"具體行動","duration":"預估時間如30分鐘","type":"acc或run"}]';
+        const res=await fetch(GAS_URL+'?action=claudeProxy&maxTokens=500&prompt='+encodeURIComponent(prompt));
+        const aiData=await res.json();
+        if(!aiData.ok) throw new Error(aiData.error||'GAS 呼叫失敗');
+        const actions=JSON.parse(aiData.text.replace(/```json|```/g,'').trim());
+        document.getElementById('gai-result-'+goalId).innerHTML='<div style="margin-top:7px">'+actions.map(a=>'<div class="action-row"><span>'+a.action+'</span><div class="action-right"><span style="font-size:10px;color:var(--ink3)">'+a.duration+'</span><button class="btn-to-cal" onclick="scheduleAction(\''+a.action.replace(/'/g,"\\'")+'\',\''+a.duration+'\',event)">排進日曆</button></div></div>').join('')+'</div>';
+        if(inputEl) inputEl.value='';
+      }catch(e){showToast('AI 拆解失敗：'+e.message);}
+      finally{btn.textContent='拆解 →';btn.style.opacity='';}
+    });
+function scheduleAction(action,duration,e){
+  e.stopPropagation();
+  document.getElementById('ai-sched-box').value=`明天安排「${action}」，預估 ${duration}`;
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelector('[data-page="today"]').classList.add('active');document.getElementById('page-today').classList.add('active');
+  showToast('已填入行程，按 AI 解析排進日曆','cal');
+}
+function getIdeas(){return JSON.parse(localStorage.getItem('tas_ideas')||'[]');}
+function saveIdeas(ideas){localStorage.setItem('tas_ideas',JSON.stringify(ideas));}
+function renderIdeas(){
+  const list=document.getElementById('ideas-list'),ideas=getIdeas();
+  if(!ideas.length){list.innerHTML='<div class="ideas-empty">說不定下一個大計畫就從這裡開始</div>';return;}
+  list.innerHTML=ideas.map((idea,i)=>`<div class="idea-row"><div class="idea-dot"></div><div class="idea-text">${idea.text}</div><span class="idea-del" onclick="deleteIdea(${i})">×</span></div>`).join('');
+}
+function addIdea(){const input=document.getElementById('ideas-input'),text=input.value.trim();if(!text) return;const ideas=getIdeas();ideas.unshift({text,date:getTodayISO()});saveIdeas(ideas);renderIdeas();input.value='';showToast('想法已存入 ✦');}
+function deleteIdea(i){const ideas=getIdeas();ideas.splice(i,1);saveIdeas(ideas);renderIdeas();}
+function showToast(msg,type=''){const t=document.getElementById('toast');t.textContent=msg;t.className='show'+(type?' '+type:'');clearTimeout(t._timer);t._timer=setTimeout(()=>{t.className='';},3000);}
+</script>
+</body>
+</html>
