@@ -703,15 +703,17 @@ function toggleVoiceSched(){
 }
 async function handleAiSchedule(){
   const text=document.getElementById('ai-sched-box').value.trim();
-  if(!text) return;if(!apiKey){showToast('請先設定 API Key');return;}
+  if(!text) return;
   const btn=document.getElementById('btn-ai-sched');
   btn.textContent='AI 解析中...';btn.style.opacity='0.6';btn.style.pointerEvents='none';
   try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01'},body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:300,messages:[{role:'user',content:`今天是${new Date().toLocaleDateString('zh-TW',{year:'numeric',month:'long',day:'numeric',weekday:'long'})}（${getTodayISO()}）。用戶說：「${text}」\n只回傳JSON：{"title":"行程名稱","date":"yyyy-MM-dd","startTime":"HH:mm","endTime":"HH:mm","color":"acc或run或rest或leak"}\ncolor：學習/創作→acc；客戶/工作/會議→run；休息/運動→rest；無效等待→leak。`}]})});
+    const prompt='今天是'+new Date().toLocaleDateString('zh-TW',{year:'numeric',month:'long',day:'numeric',weekday:'long'})+'（'+getTodayISO()+'）。用戶說：「'+text+'」\n只回傳JSON：{"title":"行程名稱","date":"yyyy-MM-dd","startTime":"HH:mm","endTime":"HH:mm","color":"acc或run或rest或leak"}\ncolor：學習/創作→acc；客戶/工作/會議→run；休息/運動→rest；無效等待→leak。';
+    const res=await fetch(GAS_URL+'?action=claudeProxy&maxTokens=300&prompt='+encodeURIComponent(prompt));
     const aiData=await res.json();
-    const json=JSON.parse(aiData.content[0].text.replace(/```json|```/g,'').trim());
+    if(!aiData.ok) throw new Error(aiData.error||'GAS 呼叫失敗');
+    const json=JSON.parse(aiData.text.replace(/```json|```/g,'').trim());
     const fb=document.getElementById('sched-feedback');
-    fb.textContent=`✓ ${json.date} ${json.startTime}–${json.endTime}「${json.title}」送出中...`;fb.style.color='rgba(255,255,255,0.6)';
+    fb.textContent='✓ '+json.date+' '+json.startTime+'–'+json.endTime+'「'+json.title+'」送出中...';fb.style.color='rgba(255,255,255,0.6)';
     const params=new URLSearchParams({action:'addEvent',title:json.title,date:json.date,startTime:json.startTime,endTime:json.endTime,color:json.color});
     const r2=await fetch(GAS_URL+'?'+params.toString());const d2=await r2.json();
     if(!d2.ok) throw new Error(d2.error||d2.message);
@@ -757,12 +759,14 @@ function deleteTodo(i){const todos=getTodos();todos.splice(i,1);saveTodos(todos)
 // Record
 async function handleRecord(){
   const box=document.getElementById('input-box'),text=box.value.trim();if(!text) return;
-  if(!apiKey){showToast('請先設定 API Key');return;}
   const btn=document.getElementById('btn-send');btn.classList.add('loading');btn.textContent='分析中...';
   const timeStr=new Date().toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'});
   try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01'},body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:200,messages:[{role:'user',content:`用戶記錄：「${text}」\n只回傳JSON：{"type":"acc或run或rest或leak","hours":數字,"summary":"10字內摘要"}\nacc=學習/創作/成長；run=客戶/工作/會議；rest=休息/運動/娛樂；leak=無效等待/分心。沒有時間資訊hours填0。`}]})});
-    const aiData=await res.json();const json=JSON.parse(aiData.content[0].text.replace(/```json|```/g,'').trim());
+    const prompt='用戶記錄：「'+text+'」\n只回傳JSON：{"type":"acc或run或rest或leak","hours":數字,"summary":"10字內摘要"}\nacc=學習/創作/成長；run=客戶/工作/會議；rest=休息/運動/娛樂；leak=無效等待/分心。沒有時間資訊hours填0。';
+    const res=await fetch(GAS_URL+'?action=claudeProxy&maxTokens=200&prompt='+encodeURIComponent(prompt));
+    const aiData=await res.json();
+    if(!aiData.ok) throw new Error(aiData.error||'GAS 呼叫失敗');
+    const json=JSON.parse(aiData.text.replace(/```json|```/g,'').trim());
     const record={id:Date.now(),text,type:json.type||'run',hours:json.hours||0,summary:json.summary||text.slice(0,15),time:timeStr,date:getTodayISO()};
     records.unshift(record);localStorage.setItem('tas_records',JSON.stringify(records));
     renderRecords();updateStats();box.value='';showToast('已記錄！');
@@ -853,18 +857,19 @@ function bindDecomposeButtons(){
   document.querySelectorAll('.btn-decompose').forEach(btn=>{
     btn.addEventListener('click',async e=>{
       e.stopPropagation();const goalId=btn.dataset.goal,inputEl=document.getElementById('gai-'+goalId);
-      const direction=inputEl?inputEl.value.trim():'';if(!direction){showToast('請輸入這週想推進的方向');return;}if(!apiKey){showToast('請先設定 API Key');return;}
+      const direction=inputEl?inputEl.value.trim():'';if(!direction){showToast('請輸入這週想推進的方向');return;}
       btn.textContent='拆解中...';btn.style.opacity='0.6';
       try{
-        const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01'},body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:500,messages:[{role:'user',content:`目標：${GOAL_NAMES[goalId]}\n這週想推進：「${direction}」\n今天：${new Date().toLocaleDateString('zh-TW')}\n拆解成 3–4 個具體微行動（15分鐘到2小時內可完成），只回傳JSON：\n[{"action":"具體行動","duration":"預估時間如30分鐘","type":"acc或run"}]`}]})});
-        const aiData=await res.json();const actions=JSON.parse(aiData.content[0].text.replace(/```json|```/g,'').trim());
-        document.getElementById('gai-result-'+goalId).innerHTML='<div style="margin-top:7px">'+actions.map(a=>`<div class="action-row"><span>${a.action}</span><div class="action-right"><span style="font-size:10px;color:var(--ink3)">${a.duration}</span><button class="btn-to-cal" onclick="scheduleAction('${a.action.replace(/'/g,"\\'")}','${a.duration}',event)">排進日曆</button></div></div>`).join('')+'</div>';
+        const prompt='目標：'+GOAL_NAMES[goalId]+'\n這週想推進：「'+direction+'」\n今天：'+new Date().toLocaleDateString('zh-TW')+'\n拆解成 3–4 個具體微行動（15分鐘到2小時內可完成），只回傳JSON：\n[{"action":"具體行動","duration":"預估時間如30分鐘","type":"acc或run"}]';
+        const res=await fetch(GAS_URL+'?action=claudeProxy&maxTokens=500&prompt='+encodeURIComponent(prompt));
+        const aiData=await res.json();
+        if(!aiData.ok) throw new Error(aiData.error||'GAS 呼叫失敗');
+        const actions=JSON.parse(aiData.text.replace(/```json|```/g,'').trim());
+        document.getElementById('gai-result-'+goalId).innerHTML='<div style="margin-top:7px">'+actions.map(a=>'<div class="action-row"><span>'+a.action+'</span><div class="action-right"><span style="font-size:10px;color:var(--ink3)">'+a.duration+'</span><button class="btn-to-cal" onclick="scheduleAction(\''+a.action.replace(/'/g,"\\'")+'\',\''+a.duration+'\',event)">排進日曆</button></div></div>').join('')+'</div>';
         if(inputEl) inputEl.value='';
       }catch(e){showToast('AI 拆解失敗：'+e.message);}
       finally{btn.textContent='拆解 →';btn.style.opacity='';}
     });
-  });
-}
 function scheduleAction(action,duration,e){
   e.stopPropagation();
   document.getElementById('ai-sched-box').value=`明天安排「${action}」，預估 ${duration}`;
