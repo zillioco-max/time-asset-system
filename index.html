@@ -870,6 +870,8 @@ function bindDecomposeButtons(){
       }catch(e){showToast('AI 拆解失敗：'+e.message);}
       finally{btn.textContent='拆解 →';btn.style.opacity='';}
     });
+  });
+}
 function scheduleAction(action,duration,e){
   e.stopPropagation();
   document.getElementById('ai-sched-box').value=`明天安排「${action}」，預估 ${duration}`;
