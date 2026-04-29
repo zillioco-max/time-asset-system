@@ -1193,20 +1193,17 @@ async function callDiscussAI(messages,isOpening=false){
 如果討論出具體可執行的行動，在回覆最後用 JSON 格式附上：[ACTIONS:{"items":[{"label":"行動名稱"}]}]
 語氣：自然、像朋友，不過度正式。繁體中文。每次回覆不超過 150 字，除非她需要詳細規劃。`;
 
-    // 圖片訊息 GAS 不支援 base64，先過濾掉只保留 text
     const safeMessages=messages.map(m=>{
       if(typeof m.content==='string') return m;
       const textParts=m.content.filter(p=>p.type==='text');
       return {...m,content:textParts.length===1?textParts[0].text:textParts.map(p=>p.text).join('\n')};
     });
 
-    const params=new URLSearchParams({
-      action:'discussProxy',
-      messages:JSON.stringify(safeMessages),
-      system:systemPrompt,
-      maxTokens:'600'
+    const res=await fetch(GAS_URL,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'discussProxy',messages:safeMessages,system:systemPrompt,maxTokens:600})
     });
-    const res=await fetch(GAS_URL+'?'+params.toString());
     const data=await res.json();
     if(!data.ok) throw new Error(data.error||'GAS 呼叫失敗');
     let text=data.text||'';
