@@ -1187,22 +1187,29 @@ async function callDiscussAI(messages,isOpening=false){
   btn.disabled=true;
   const typingId=isOpening?document.querySelector('#discuss-messages .dmsg.ai:last-child')?.id:addDiscussMsg('ai','...',true);
   try{
-    const apiK=localStorage.getItem('tas_apikey')||'';
-    if(!apiK){updateDiscussMsg(typingId,'請先在左側欄設定 Anthropic API Key');btn.disabled=false;return;}
     const systemPrompt=`你是 Wenshan（李文珊）的目標教練兼執行夥伴。她是高雄的自由工作者，擅長行銷策略與 AI 工具應用。
 當前討論目標：「${GOAL_META[discussGoalId].name}」
 你的角色：混合式——她分析時你傾聽整理；她需要方向時你提問引導；她想要行動時你幫她拆解具體步驟。
 如果討論出具體可執行的行動，在回覆最後用 JSON 格式附上：[ACTIONS:{"items":[{"label":"行動名稱"}]}]
 語氣：自然、像朋友，不過度正式。繁體中文。每次回覆不超過 150 字，除非她需要詳細規劃。`;
-    const resp=await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{'Content-Type':'application/json','x-api-key':apiK,'anthropic-version':'2023-06-01'},
-      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:600,system:systemPrompt,messages})
+
+    // 圖片訊息 GAS 不支援 base64，先過濾掉只保留 text
+    const safeMessages=messages.map(m=>{
+      if(typeof m.content==='string') return m;
+      const textParts=m.content.filter(p=>p.type==='text');
+      return {...m,content:textParts.length===1?textParts[0].text:textParts.map(p=>p.text).join('\n')};
     });
-    const data=await resp.json();
-    if(data.error) throw new Error(data.error.message);
-    let text=data.content[0].text||'';
-    // 解析 actions
+
+    const params=new URLSearchParams({
+      action:'discussProxy',
+      messages:JSON.stringify(safeMessages),
+      system:systemPrompt,
+      maxTokens:'600'
+    });
+    const res=await fetch(GAS_URL+'?'+params.toString());
+    const data=await res.json();
+    if(!data.ok) throw new Error(data.error||'GAS 呼叫失敗');
+    let text=data.text||'';
     let actions=[];
     const actMatch=text.match(/\[ACTIONS:(.*?)\]/s);
     if(actMatch){
@@ -1210,8 +1217,7 @@ async function callDiscussAI(messages,isOpening=false){
       text=text.replace(/\[ACTIONS:.*?\]/s,'').trim();
     }
     updateDiscussMsg(typingId,text.replace(/\n/g,'<br>'),actions);
-    // 更新 history
-    discussHistory.push({role:'assistant',content:data.content[0].text});
+    discussHistory.push({role:'assistant',content:data.text});
   }catch(e){updateDiscussMsg(typingId,'AI 回覆失敗：'+e.message);}
   finally{btn.disabled=false;document.getElementById('discuss-input').focus();}
 }
