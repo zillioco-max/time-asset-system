@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wenshan · 目標儀表板</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Outfit:wght@300;400;500;600&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #F7F5F2;
+  --card: #FFFFFF;
+  --ink: #1C1917;
+  --ink2: #78716C;
+  --ink3: #A8A29E;
+  --border: #E7E5E4;
+  --acc: #4A7C59;
+  --acc-pale: #EDF4EF;
+  --gold: #C4960A;
+  --gold-pale: #FEF9E7;
+  --blue: #3B6EA5;
+  --blue-pale: #EEF3FA;
+  --rose: #9C5A5A;
+  --rose-pale: #FAF0F0;
+  --radius: 16px;
+  --shadow: 0 1px 8px rgba(0,0,0,0.05);
+  --shadow-md: 0 4px 20px rgba(0,0,0,0.08);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;}
+
+/* ── LAYOUT ── */
+.container{max-width:680px;margin:0 auto;padding:24px 16px 60px;}
+
+/* ── HEADER ── */
+.header{padding:32px 0 24px;display:flex;align-items:flex-start;justify-content:space-between;}
+.header-left{}
+.header-date{font-size:12px;color:var(--ink3);font-weight:500;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:6px;font-family:'DM Mono',monospace;}
+.header-title{font-family:'DM Serif Display',serif;font-size:28px;color:var(--ink);line-height:1.2;}
+.header-title em{font-style:italic;color:var(--acc);}
+.header-streak{display:flex;align-items:center;gap:6px;margin-top:10px;}
+.streak-chip{padding:4px 12px;border-radius:20px;font-size:11px;font-weight:600;background:var(--gold-pale);color:var(--gold);border:1px solid rgba(196,150,10,0.15);}
+
+/* ── SECTION LABEL ── */
+.section-label{font-size:10px;font-weight:700;color:var(--ink3);letter-spacing:0.1em;text-transform:uppercase;margin:28px 0 12px;display:flex;align-items:center;gap:10px;}
+.section-label::after{content:'';flex:1;height:1px;background:var(--border);}
+
+/* ── TODAY SUMMARY ── */
+.today-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:6px;}
+.today-card{background:var(--card);border-radius:var(--radius);border:1px solid var(--border);padding:18px 20px;box-shadow:var(--shadow);}
+.today-num{font-family:'DM Serif Display',serif;font-size:36px;color:var(--ink);line-height:1;}
+.today-num span{font-size:18px;color:var(--ink3);}
+.today-label{font-size:11px;color:var(--ink3);margin-top:4px;font-weight:500;}
+.week-card{background:var(--card);border-radius:var(--radius);border:1px solid var(--border);padding:18px 20px;box-shadow:var(--shadow);grid-column:span 2;}
+.week-bar-row{display:flex;gap:4px;margin:10px 0 6px;}
+.week-day{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;}
+.week-day-bar{width:100%;height:32px;border-radius:6px;background:var(--border);position:relative;overflow:hidden;}
+.week-day-fill{position:absolute;bottom:0;left:0;right:0;border-radius:6px;transition:height 0.5s ease;}
+.week-day-fill.done{background:linear-gradient(180deg,var(--acc),#6aab7e);}
+.week-day-fill.partial{background:linear-gradient(180deg,var(--gold),#e0b840);}
+.week-day-label{font-size:9px;color:var(--ink3);font-weight:600;font-family:'DM Mono',monospace;}
+.week-day.today .week-day-label{color:var(--acc);font-weight:700;}
+.week-summary{font-size:12px;color:var(--ink2);display:flex;justify-content:space-between;}
+.week-summary strong{color:var(--ink);font-weight:600;}
+
+/* ── GOAL CARDS ── */
+.goal-card{background:var(--card);border-radius:var(--radius);border:1px solid var(--border);box-shadow:var(--shadow);margin-bottom:10px;overflow:hidden;transition:box-shadow 0.2s;}
+.goal-card:hover{box-shadow:var(--shadow-md);}
+.goal-head{padding:18px 20px 14px;cursor:pointer;user-select:none;}
+.goal-top-row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px;}
+.goal-left{flex:1;}
+.goal-emoji{font-size:22px;margin-bottom:6px;display:block;}
+.goal-name{font-family:'DM Serif Display',serif;font-size:17px;color:var(--ink);line-height:1.3;margin-bottom:4px;}
+.goal-desc{font-size:11px;color:var(--ink3);line-height:1.5;}
+.goal-badge{font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;flex-shrink:0;margin-top:2px;}
+.badge-active{background:var(--acc-pale);color:var(--acc);}
+.badge-exam{background:var(--gold-pale);color:var(--gold);}
+.badge-planned{background:var(--blue-pale);color:var(--blue);}
+.goal-prog-row{display:flex;align-items:center;gap:10px;}
+.goal-prog-bg{flex:1;height:5px;background:var(--bg);border-radius:3px;overflow:hidden;}
+.goal-prog-fill{height:100%;border-radius:3px;transition:width 0.7s ease;}
+.fill-acc{background:linear-gradient(90deg,var(--acc),#7EC4A7);}
+.fill-gold{background:linear-gradient(90deg,var(--gold),#e0b840);}
+.fill-blue{background:linear-gradient(90deg,var(--blue),#6ea0d4);}
+.fill-grey{background:linear-gradient(90deg,#aaa,#ccc);}
+.goal-prog-pct{font-size:11px;font-weight:600;color:var(--ink2);font-family:'DM Mono',monospace;min-width:32px;text-align:right;}
+
+/* Milestones */
+.goal-milestones{border-top:1px solid var(--border);padding:14px 20px 16px;background:#FAFAF9;display:none;}
+.goal-milestones.open{display:block;}
+.ms-label{font-size:10px;font-weight:700;color:var(--ink3);letter-spacing:0.07em;text-transform:uppercase;margin-bottom:10px;}
+.ms-list{display:flex;flex-direction:column;gap:6px;}
+.ms-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;cursor:pointer;transition:background 0.15s;}
+.ms-item:hover{background:rgba(0,0,0,0.03);}
+.ms-check{width:18px;height:18px;border-radius:5px;border:2px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff;transition:all 0.18s;background:#fff;}
+.ms-check.done{background:var(--acc);border-color:var(--acc);}
+.ms-text{font-size:13px;color:var(--ink);flex:1;line-height:1.4;}
+.ms-text.done{text-decoration:line-through;color:var(--ink3);}
+.ms-chevron{font-size:11px;color:var(--ink3);transition:transform 0.2s;display:inline-block;}
+.goal-head.open .ms-chevron{transform:rotate(180deg);}
+
+/* ── COMPLETED LOG ── */
+.log-list{display:flex;flex-direction:column;gap:6px;}
+.log-item{background:var(--card);border-radius:12px;border:1px solid var(--border);padding:12px 16px;display:flex;align-items:center;gap:12px;animation:fadeIn 0.3s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+.log-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.log-dot.ig{background:var(--acc);}
+.log-dot.google{background:var(--gold);}
+.log-dot.ipas{background:var(--blue);}
+.log-dot.yt{background:var(--rose);}
+.log-text{font-size:13px;color:var(--ink);flex:1;}
+.log-date{font-size:10px;color:var(--ink3);font-family:'DM Mono',monospace;flex-shrink:0;}
+.log-del{font-size:13px;color:var(--ink3);cursor:pointer;opacity:0;transition:opacity 0.15s;padding:2px 4px;}
+.log-item:hover .log-del{opacity:1;}
+.log-del:hover{color:var(--rose);}
+.log-empty{font-size:13px;color:var(--ink3);text-align:center;padding:20px 0;}
+
+/* Add log */
+.add-log-row{display:flex;gap:8px;margin-top:10px;}
+.add-log-select{padding:9px 10px;border:1.5px solid var(--border);border-radius:10px;font-size:12px;font-family:'Outfit',sans-serif;color:var(--ink);background:var(--card);outline:none;cursor:pointer;}
+.add-log-select:focus{border-color:var(--acc);}
+.add-log-input{flex:1;padding:9px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:'Outfit',sans-serif;color:var(--ink);background:var(--card);outline:none;}
+.add-log-input:focus{border-color:var(--acc);}
+.add-log-btn{padding:9px 16px;background:var(--acc);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:600;font-family:'Outfit',sans-serif;cursor:pointer;transition:all 0.15s;white-space:nowrap;}
+.add-log-btn:hover{background:#3a6347;}
+
+/* ── STATS ── */
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.stat-box{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;text-align:center;box-shadow:var(--shadow);}
+.stat-num{font-family:'DM Serif Display',serif;font-size:30px;color:var(--ink);}
+.stat-label{font-size:10px;color:var(--ink3);margin-top:3px;font-weight:500;}
+
+/* ── TOAST ── */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(12px);background:var(--ink);color:#fff;padding:9px 20px;border-radius:20px;font-size:13px;opacity:0;transition:all 0.25s;pointer-events:none;z-index:999;white-space:nowrap;font-weight:500;}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* ── RESPONSIVE ── */
+@media(max-width:480px){
+  .today-row{grid-template-columns:1fr 1fr;}
+  .week-card{grid-column:span 2;}
+  .header-title{font-size:22px;}
+  .add-log-row{flex-wrap:wrap;}
+  .add-log-input{min-width:0;}
+  .stats-grid{grid-template-columns:repeat(3,1fr);}
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-left">
+      <div class="header-date" id="header-date">載入中</div>
+      <div class="header-title">好好<em>前進</em>，<br>一步一步。</div>
+      <div class="header-streak">
+        <span class="streak-chip" id="streak-chip">🔥 計算中</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- TODAY + WEEK -->
+  <div class="section-label">本週概況</div>
+  <div class="today-row">
+    <div class="today-card">
+      <div class="today-num" id="today-done-num">0<span>/0</span></div>
+      <div class="today-label">今日完成 / 計畫</div>
+    </div>
+    <div class="today-card">
+      <div class="today-num" id="week-done-num">0<span>/0</span></div>
+      <div class="today-label">本週完成 / 計畫</div>
+    </div>
+    <div class="week-card">
+      <div class="week-bar-row" id="week-bars"></div>
+      <div class="week-summary">
+        <span id="week-summary-left">本週記錄</span>
+        <strong id="week-summary-right">0 件完成</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- GOALS -->
+  <div class="section-label">目標進度</div>
+  <div id="goals-container"></div>
+
+  <!-- COMPLETED LOG -->
+  <div class="section-label">完成記錄</div>
+  <div class="add-log-row">
+    <select class="add-log-select" id="log-goal-select">
+      <option value="ig">📱 IG</option>
+      <option value="google">🎓 Google</option>
+      <option value="ipas">📜 iPAS</option>
+      <option value="yt">🎵 YT</option>
+    </select>
+    <input type="text" class="add-log-input" id="log-input" placeholder="記錄今天完成了什麼...">
+    <button class="add-log-btn" onclick="addLog()">記錄 ✦</button>
+  </div>
+  <div class="log-list" id="log-list" style="margin-top:10px;"></div>
+
+  <!-- STATS -->
+  <div class="section-label">累積統計</div>
+  <div class="stats-grid">
+    <div class="stat-box">
+      <div class="stat-num" id="stat-total">0</div>
+      <div class="stat-label">總完成件數</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num" id="stat-ms">0</div>
+      <div class="stat-label">里程碑達成</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num" id="stat-streak">0</div>
+      <div class="stat-label">連續記錄天數</div>
+    </div>
+  </div>
+
+</div>
+<div id="toast"></div>
+
+<script>
+// ── DATA ──
+const GOALS = [
+  {
+    id:'ig', emoji:'📱', name:'@shan_visible IG 日更', badge:'進行中', badgeClass:'badge-active',
+    desc:'個人品牌帳號，每日發文，分享真實 AI 輔助工作體驗。',
+    fillClass:'fill-acc', dotClass:'ig',
+    milestones:[
+      {text:'開設帳號並完成個人資料', done:true},
+      {text:'發出第一篇貼文', done:true},
+      {text:'累積 10 篇貼文', done:false},
+      {text:'達到 100 個追蹤者', done:false},
+      {text:'連續發文 30 天', done:false}
+    ]
+  },
+  {
+    id:'google', emoji:'🎓', name:'Google 數位人才探索計畫', badge:'備考中', badgeClass:'badge-exam',
+    desc:'AI 職場通識 ＋ 數位行銷，報名截止 2026/8/10。',
+    fillClass:'fill-gold', dotClass:'google',
+    milestones:[
+      {text:'確認報名資格與課程內容', done:false},
+      {text:'完成 AI 職場通識課程', done:false},
+      {text:'完成數位行銷課程', done:false},
+      {text:'報名並取得認證', done:false}
+    ]
+  },
+  {
+    id:'ipas', emoji:'📜', name:'iPAS AI 應用規劃師初級', badge:'等公告', badgeClass:'badge-planned',
+    desc:'等待報名公告，持續累積 AI 工具作品集。自評進度 45%。',
+    fillClass:'fill-blue', dotClass:'ipas',
+    milestones:[
+      {text:'取得考試大綱', done:false},
+      {text:'完成 10 個 AI 工具實作', done:true},
+      {text:'建立 AI 應用作品集', done:false},
+      {text:'報名並參加考試', done:false}
+    ]
+  },
+  {
+    id:'yt', emoji:'🎵', name:'YT 聲聲慢頻道', badge:'規劃中', badgeClass:'badge-planned',
+    desc:'AI 輔助聲音內容頻道，概念與定位規劃中。',
+    fillClass:'fill-grey', dotClass:'yt',
+    milestones:[
+      {text:'確定頻道定位與內容策略', done:false},
+      {text:'製作第一支試播影片', done:false},
+      {text:'發布第一支正式影片', done:false}
+    ]
+  }
+];
+
+// ── STORAGE ──
+function getMilestones(id){
+  const s=localStorage.getItem('db_ms_'+id);
+  if(s) return JSON.parse(s);
+  const g=GOALS.find(g=>g.id===id);
+  return g?JSON.parse(JSON.stringify(g.milestones)):[];
+}
+function saveMilestones(id,items){localStorage.setItem('db_ms_'+id,JSON.stringify(items));}
+function getLogs(){return JSON.parse(localStorage.getItem('db_logs')||'[]');}
+function saveLogs(logs){localStorage.setItem('db_logs',JSON.stringify(logs));}
+function getWeekData(){return JSON.parse(localStorage.getItem('db_week')||'{}');}
+function saveWeekData(d){localStorage.setItem('db_week',JSON.stringify(d));}
+
+// ── UTILS ──
+function getTodayISO(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function getWeekISO(){const d=new Date();const day=d.getDay()||7;d.setDate(d.getDate()-day+1);return d.toISOString().slice(0,10);}
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.className='show';clearTimeout(t._t);t._t=setTimeout(()=>{t.className='';},2500);}
+
+// ── HEADER ──
+function initHeader(){
+  const now=new Date();
+  const weekDays=['日','一','二','三','四','五','六'];
+  document.getElementById('header-date').textContent=
+    now.toLocaleDateString('zh-TW',{year:'numeric',month:'long',day:'numeric'})+'　週'+weekDays[now.getDay()];
+  // streak
+  const logs=getLogs();
+  let streak=0,d=new Date();
+  while(true){
+    const iso=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    if(logs.some(l=>l.date===iso)){streak++;d.setDate(d.getDate()-1);}
+    else break;
+  }
+  document.getElementById('streak-chip').textContent=streak>0?`🔥 連續記錄 ${streak} 天`:'✦ 開始記錄吧';
+  document.getElementById('stat-streak').textContent=streak;
+}
+
+// ── WEEK BARS ──
+function initWeekBars(){
+  const now=new Date();
+  const dayOfWeek=now.getDay()||7;
+  const labels=['一','二','三','四','五','六','日'];
+  const logs=getLogs();
+  const weekData=getWeekData();
+  let weekDone=0,weekPlan=0;
+  let html='';
+  for(let i=1;i<=7;i++){
+    const d=new Date(now);d.setDate(now.getDate()-(dayOfWeek-i));
+    const iso=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    const isToday=i===dayOfWeek;
+    const isFuture=i>dayOfWeek;
+    const dayLogs=logs.filter(l=>l.date===iso).length;
+    const dayPlan=weekData[iso]?.plan||0;
+    const pct=dayPlan>0?Math.min(100,Math.round((dayLogs/dayPlan)*100)):dayLogs>0?100:0;
+    const fillClass=pct>=100?'done':pct>0?'partial':'';
+    if(!isFuture){weekDone+=dayLogs;weekPlan+=Math.max(dayPlan,dayLogs);}
+    html+=`<div class="week-day ${isToday?'today':''}">
+      <div class="week-day-bar"><div class="week-day-fill ${fillClass}" style="height:${isFuture?0:Math.max(pct,dayLogs>0?20:0)}%"></div></div>
+      <div class="week-day-label">${labels[i-1]}</div>
+    </div>`;
+  }
+  document.getElementById('week-bars').innerHTML=html;
+  document.getElementById('week-done-num').innerHTML=`${weekDone}<span>/${weekPlan||weekDone}</span>`;
+  document.getElementById('week-summary-right').textContent=`${weekDone} 件完成`;
+  // today
+  const todayLogs=logs.filter(l=>l.date===getTodayISO()).length;
+  const todayPlan=weekData[getTodayISO()]?.plan||0;
+  document.getElementById('today-done-num').innerHTML=`${todayLogs}<span>/${Math.max(todayPlan,todayLogs)}</span>`;
+}
+
+// ── GOALS ──
+function calcPct(id){
+  const ms=getMilestones(id);
+  return ms.length?Math.round(ms.filter(m=>m.done).length/ms.length*100):0;
+}
+function renderGoals(){
+  const container=document.getElementById('goals-container');
+  container.innerHTML=GOALS.map(g=>{
+    const ms=getMilestones(g.id);
+    const pct=Math.round(ms.filter(m=>m.done).length/ms.length*100);
+    const msHtml=ms.map((m,i)=>`
+      <div class="ms-item" onclick="toggleMs('${g.id}',${i})">
+        <div class="ms-check ${m.done?'done':''}">${m.done?'✓':''}</div>
+        <div class="ms-text ${m.done?'done':''}">${m.text}</div>
+      </div>`).join('');
+    return `
+    <div class="goal-card">
+      <div class="goal-head" onclick="toggleGoalDrawer('${g.id}',this)" id="head-${g.id}">
+        <div class="goal-top-row">
+          <div class="goal-left">
+            <span class="goal-emoji">${g.emoji}</span>
+            <div class="goal-name">${g.name}</div>
+            <div class="goal-desc">${g.desc}</div>
+          </div>
+          <span class="goal-badge ${g.badgeClass}">${g.badge}</span>
+        </div>
+        <div class="goal-prog-row">
+          <div class="goal-prog-bg"><div class="goal-prog-fill ${g.fillClass}" style="width:${pct}%"></div></div>
+          <div class="goal-prog-pct">${pct}%</div>
+          <span class="ms-chevron">▾</span>
+        </div>
+      </div>
+      <div class="goal-milestones" id="ms-${g.id}">
+        <div class="ms-label">里程碑</div>
+        <div class="ms-list" id="ms-list-${g.id}">${msHtml}</div>
+      </div>
+    </div>`;
+  }).join('');
+  updateStats();
+}
+function toggleGoalDrawer(id,headEl){
+  const drawer=document.getElementById('ms-'+id);
+  const open=drawer.classList.contains('open');
+  drawer.classList.toggle('open',!open);
+  headEl.classList.toggle('open',!open);
+}
+function toggleMs(goalId,idx){
+  const ms=getMilestones(goalId);
+  ms[idx].done=!ms[idx].done;
+  saveMilestones(goalId,ms);
+  // 重新渲染那個 goal 的 ms-list
+  const g=GOALS.find(g=>g.id===goalId);
+  const pct=Math.round(ms.filter(m=>m.done).length/ms.length*100);
+  document.getElementById('ms-list-'+goalId).innerHTML=ms.map((m,i)=>`
+    <div class="ms-item" onclick="toggleMs('${goalId}',${i})">
+      <div class="ms-check ${m.done?'done':''}">${m.done?'✓':''}</div>
+      <div class="ms-text ${m.done?'done':''}">${m.text}</div>
+    </div>`).join('');
+  document.querySelector(`#head-${goalId} .goal-prog-fill`).style.width=pct+'%';
+  document.querySelector(`#head-${goalId} .goal-prog-pct`).textContent=pct+'%';
+  updateStats();
+  toast(ms[idx].done?'✦ 里程碑完成！':'已取消完成');
+}
+
+// ── LOG ──
+function addLog(){
+  const input=document.getElementById('log-input'),text=input.value.trim();
+  if(!text){toast('請輸入完成的事項');return;}
+  const goal=document.getElementById('log-goal-select').value;
+  const logs=getLogs();
+  logs.unshift({text,goal,date:getTodayISO(),ts:Date.now()});
+  saveLogs(logs);input.value='';
+  renderLogs();initWeekBars();updateStats();initHeader();
+  toast('✦ 已記錄！');
+}
+function deleteLog(ts){
+  const logs=getLogs().filter(l=>l.ts!==ts);
+  saveLogs(logs);renderLogs();initWeekBars();updateStats();initHeader();
+}
+function renderLogs(){
+  const logs=getLogs();
+  const list=document.getElementById('log-list');
+  if(!logs.length){list.innerHTML='<div class="log-empty">還沒有完成記錄，今天做了什麼？</div>';return;}
+  list.innerHTML=logs.slice(0,30).map(l=>`
+    <div class="log-item">
+      <div class="log-dot ${l.goal}"></div>
+      <div class="log-text">${l.text}</div>
+      <div class="log-date">${l.date}</div>
+      <span class="log-del" onclick="deleteLog(${l.ts})">×</span>
+    </div>`).join('');
+}
+
+// ── STATS ──
+function updateStats(){
+  const logs=getLogs();
+  document.getElementById('stat-total').textContent=logs.length;
+  let msDone=0;
+  GOALS.forEach(g=>{msDone+=getMilestones(g.id).filter(m=>m.done).length;});
+  document.getElementById('stat-ms').textContent=msDone;
+}
+
+// ── INIT ──
+document.getElementById('log-input').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addLog();}});
+initHeader();
+initWeekBars();
+renderGoals();
+renderLogs();
+</script>
+</body>
+</html>
